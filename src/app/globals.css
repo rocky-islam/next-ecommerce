@@ -269,6 +269,18 @@ body {
   background-size: 200% 100%;
   animation: gradient-pan 6s linear infinite;
 }
+/* background-position repaints every frame, so text shimmers sweep a few
+   times on arrival and then rest */
+.animate-gradient-pan-once {
+  background-size: 200% 100%;
+  animation: gradient-pan 3s linear 3 both;
+}
+
+/* Looping decoration pauses while its section is off-screen */
+[data-paused],
+[data-paused] * {
+  animation-play-state: paused !important;
+}
 
 /* Diagonal light sweep across primary buttons on hover */
 .btn-shine {
@@ -362,6 +374,20 @@ body {
   pointer-events: none;
   opacity: 0.045;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Grain is imperceptible on small high-DPR screens; skip the full-screen layer */
+@media (max-width: 767px) {
+  .grain {
+    display: none;
+  }
+}
+
+/* ── Scroll-lit text: one --p variable drives every word ── */
+[data-scroll-text] .scroll-word {
+  --t: clamp(0, calc(var(--p, 0) * var(--n) - var(--i)), 1);
+  opacity: calc(var(--dim) + (1 - var(--dim)) * var(--t));
+  transform: translate3d(0, calc((1 - var(--t)) * 6px), 0);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -522,6 +548,7 @@ html[data-intro] .intro {
   .animate-float,
   .animate-drift,
   .animate-gradient-pan,
+  .animate-gradient-pan-once,
   .animate-scroll-cue,
   .animate-indeterminate,
   .animate-spin-slow {

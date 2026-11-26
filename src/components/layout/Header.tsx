@@ -52,7 +52,9 @@ export function Header() {
     const previous = scrollY.getPrevious() ?? 0;
     setIsScrolled(latest > 12);
     if (Math.abs(latest - previous) < 4) return;
-    setIsHidden(latest > previous && latest > 420 && !isMegaOpen);
+    // Track scroll direction only; open menus are handled by `hidden` below,
+    // so the header still tucks away once a menu closes mid-scroll.
+    setIsHidden(latest > previous && latest > 420);
   });
 
   // ── Mega menu open/close with hover intent ──
@@ -109,10 +111,13 @@ export function Header() {
         transition={{ duration: 0.5, ease: EASE.out }}
         onFocusCapture={() => setIsHidden(false)}
         style={{ viewTransitionName: "site-header" }}
-        className={`sticky top-0 z-40 border-b text-white backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-500 ${
+        // Frosted glass re-blurs the page under the header every scroll
+        // frame; it halved homepage scroll FPS on throttled phones, so
+        // small screens get a near-solid bar and the glass starts at lg.
+        className={`sticky top-0 z-40 border-b text-white lg:backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-500 ${
           isScrolled
-            ? "bg-[#0B0B0B]/80 border-white/10 shadow-[0_12px_40px_-16px_rgba(0,0,0,0.6)]"
-            : "bg-[#0B0B0B]/90 border-neutral-800"
+            ? "bg-[#0B0B0B]/[0.97] lg:bg-[#0B0B0B]/80 border-white/10 shadow-[0_12px_40px_-16px_rgba(0,0,0,0.6)]"
+            : "bg-[#0B0B0B]/[0.97] lg:bg-[#0B0B0B]/90 border-neutral-800"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,8 +179,8 @@ export function Header() {
                     <Link
                       href={link.href}
                       onClick={closeMega}
-                      className={`group relative z-10 block py-2 text-xs font-bold uppercase tracking-[0.16em] text-neutral-400 hover:text-white transition-colors ${
-                        isCatalog ? "pl-3 pr-1" : "px-3"
+                      className={`group relative z-10 block py-2 whitespace-nowrap text-[11px] xl:text-xs font-bold uppercase tracking-[0.1em] xl:tracking-[0.16em] text-neutral-400 hover:text-white transition-colors ${
+                        isCatalog ? "pl-2.5 xl:pl-3 pr-1" : "px-2.5 xl:px-3"
                       }`}
                     >
                       <RollText>{link.name}</RollText>
@@ -187,7 +192,7 @@ export function Header() {
                         aria-expanded={isMegaOpen}
                         aria-controls={MEGA_MENU_ID}
                         aria-label="Toggle catalog menu"
-                        className="relative z-10 pr-3 pl-0.5 py-2 text-neutral-500 hover:text-white transition-colors cursor-pointer"
+                        className="relative z-10 pr-2.5 xl:pr-3 pl-0.5 py-2 text-neutral-500 hover:text-white transition-colors cursor-pointer"
                       >
                         <motion.span
                           animate={{ rotate: isMegaOpen ? 180 : 0 }}
@@ -213,7 +218,7 @@ export function Header() {
                 aria-label="Search catalog"
               >
                 <Search className="w-4 h-4 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />
-                <span className="hidden md:inline-block text-[11px] font-bold tracking-widest uppercase text-neutral-400 group-hover:text-white transition-colors">
+                <span className="hidden md:inline-block lg:hidden xl:inline-block text-[11px] font-bold tracking-widest uppercase text-neutral-400 group-hover:text-white transition-colors">
                   <RollText>Search</RollText>
                 </span>
               </motion.button>

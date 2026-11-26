@@ -11,6 +11,7 @@ import {
   useScroll,
   useTransform,
 } from "motion/react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { SplitText } from "@/components/motion/SplitText";
 import { Reveal } from "@/components/motion/Reveal";
 import { Magnetic } from "@/components/motion/Magnetic";
@@ -19,6 +20,10 @@ import { RollText } from "@/components/motion/RollText";
 export function CampaignBanner() {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
+  // The clip-path aperture repaints every scroll frame; keep it to large
+  // screens where there is GPU headroom and the effect reads best.
+  const large = useMediaQuery("(min-width: 1024px)");
+  const animate = large && !reduce;
 
   // Scroll-linked "aperture": the banner opens from an inset frame to full
   // bleed as it approaches centre screen while the photo settles from a zoom.
@@ -34,12 +39,12 @@ export function CampaignBanner() {
   return (
     <section ref={ref} className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <motion.div
-        style={reduce ? undefined : { clipPath }}
+        style={animate ? { clipPath } : undefined}
         className="relative rounded-3xl overflow-hidden min-h-[440px] flex items-center bg-neutral-900 border border-neutral-800 shadow-2xl group"
       >
         {/* Background Image: scroll zoom-settle + slow hover scale */}
         <motion.div
-          style={reduce ? undefined : { scale: imageScale }}
+          style={animate ? { scale: imageScale } : undefined}
           className="absolute inset-0"
         >
           <Image

@@ -1,18 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import { EASE } from "@/lib/motion";
 
 export function AnnouncementBar() {
   const [isVisible, setIsVisible] = useState(true);
+  // The shimmer animates background-position (a repaint per frame), so it
+  // only runs while the bar is on screen.
+  const ref = useRef<HTMLDivElement>(null);
+  const onScreen = useInView(ref);
 
   return (
     <AnimatePresence initial={false}>
       {isVisible && (
         <motion.div
           key="announcement"
+          ref={ref}
+          data-paused={onScreen ? undefined : ""}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.45, ease: EASE.inOut }}
           className="overflow-hidden bg-[#050505] border-b border-neutral-900"
@@ -20,7 +26,7 @@ export function AnnouncementBar() {
           <div className="text-neutral-300 text-[10.5px] font-bold tracking-[0.2em] uppercase py-2 px-4">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
               <div className="flex-1 text-center truncate">
-                <span className="bg-linear-to-r from-neutral-400 via-white to-neutral-400 bg-clip-text text-transparent animate-gradient-pan">
+                <span className="bg-linear-to-r from-neutral-400 via-white to-neutral-400 bg-clip-text text-transparent animate-gradient-pan-once">
                   SS/26 RELEASE • COMPLIMENTARY 64-DISTRICT SHIPPING OVER ৳2,500 • 7-DAY SIZE EXCHANGE
                 </span>
               </div>

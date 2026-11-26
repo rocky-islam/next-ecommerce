@@ -33,7 +33,7 @@ export function CartDrawer() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Close drawer on Escape key + lock page scroll while open
-  useOverlay(isOpen, closeCart);
+  const dialogRef = useOverlay(isOpen, closeCart);
 
   const lines = cart?.lines?.nodes || [];
   const subtotalAmount = parseFloat(cart?.cost?.subtotalAmount?.amount || "0");
@@ -61,7 +61,7 @@ export function CartDrawer() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label="Shopping bag">
+        <div ref={dialogRef} className="fixed inset-0 z-50 overflow-hidden outline-none" role="dialog" aria-modal="true" aria-label="Shopping bag">
           {/* Backdrop with fade motion */}
           <motion.div
             initial={{ opacity: 0 }}

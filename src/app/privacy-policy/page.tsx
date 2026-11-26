@@ -3,7 +3,7 @@ import { SplitText } from "@/components/motion/SplitText";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 
 export const metadata = {
-  title: "Privacy Policy | NextStore",
+  title: "Privacy Policy | KINETIC // STUDIO",
   description: "How we collect, protect, and handle your data through our Shopify headless storefront.",
 };
 
@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-lg font-bold text-neutral-900 mb-2">1. Data Collection &amp; Purpose</h2>
           <p>
-            When you browse NextStore, anonymous analytics may be collected to improve site speed and usability. When you place an order, your personal and shipping information is captured directly and processed securely through official Shopify Checkout.
+            When you browse KINETIC // STUDIO, anonymous analytics may be collected to improve site speed and usability. When you place an order, your personal and shipping information is captured directly and processed securely through official Shopify Checkout.
           </p>
         </section>
 

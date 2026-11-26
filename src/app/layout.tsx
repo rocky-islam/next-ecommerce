@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KINETIC // ATELIER | Contemporary Footwear Studio",
+  title: "KINETIC // STUDIO | Contemporary Footwear",
   description:
     "Independent contemporary footwear studio featuring certified men's, women's, and youth footwear collections with official BDT pricing and express nationwide delivery.",
   keywords: [
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
   ),
   openGraph: {
-    title: "KINETIC // ATELIER | Contemporary Footwear Studio",
+    title: "KINETIC // STUDIO | Contemporary Footwear",
     description:
       "Independent contemporary footwear studio featuring certified footwear collections with express nationwide delivery.",
     type: "website",
@@ -62,7 +62,7 @@ export default function RootLayout({
         {/* Without JS, scroll-reveal content must never stay hidden */}
         <noscript
           dangerouslySetInnerHTML={{
-            __html: `<style>[data-visible="false"],[data-visible="false"]>*,[data-visible="false"] .split-word,[data-visible="false"]>[data-image-reveal-inner]{opacity:1!important;transform:none!important;clip-path:none!important}</style>`,
+            __html: `<style>[data-visible="false"],[data-visible="false"]>*,[data-visible="false"] .split-word,[data-visible="false"]>[data-image-reveal-inner],[data-scroll-text] .scroll-word{opacity:1!important;transform:none!important;clip-path:none!important}</style>`,
           }}
         />
         <Script id="intro-gate" strategy="beforeInteractive">

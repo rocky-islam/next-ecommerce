@@ -106,7 +106,7 @@ export function SearchModal({
   };
 
   // Escape closes, page scroll locked while open
-  useOverlay(isOpen, handleClose);
+  const dialogRef = useOverlay(isOpen, handleClose);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +127,7 @@ export function SearchModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Search catalog">
+        <div ref={dialogRef} className="fixed inset-0 z-50 outline-none" role="dialog" aria-modal="true" aria-label="Search catalog">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}

@@ -29,12 +29,12 @@ const fadeItem = {
 };
 
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
-  useOverlay(isOpen, onClose);
+  const dialogRef = useOverlay(isOpen, onClose);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Site navigation">
+        <div ref={dialogRef} className="fixed inset-0 z-50 lg:hidden outline-none" role="dialog" aria-modal="true" aria-label="Site navigation">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}

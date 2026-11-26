@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowUpRight, Sparkles, ShieldCheck, Compass, ArrowDown } from "lucide-react";
 import {
   motion,
+  useInView,
   useMotionValue,
   useReducedMotion,
   useScroll,
@@ -25,6 +26,8 @@ import { RollText } from "@/components/motion/RollText";
 export function HeroBanner() {
   const sectionRef = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
+  // Pause the hero's looping CSS animations once it scrolls away
+  const heroOnScreen = useInView(sectionRef);
 
   // Cinematic scroll-out: copy drifts up and dims, visual sinks slower
   const { scrollYProgress } = useScroll({
@@ -62,6 +65,7 @@ export function HeroBanner() {
       ref={sectionRef}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
+      data-paused={heroOnScreen ? undefined : ""}
       className="relative bg-[#0E0E0E] text-white overflow-hidden"
     >
       {/* Architectural grid lines, radially faded */}
@@ -82,11 +86,11 @@ export function HeroBanner() {
       {/* Drifting ambient gradients (CSS, compositor-only) */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 right-1/4 w-[28rem] h-[28rem] bg-neutral-700/25 rounded-full blur-3xl animate-drift"
+        className="pointer-events-none absolute -top-24 right-1/4 w-[28rem] h-[28rem] bg-neutral-700/25 rounded-full blur-3xl animate-drift hidden lg:block"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 left-10 w-80 h-80 bg-neutral-800/40 rounded-full blur-3xl animate-drift [animation-delay:-7s]"
+        className="pointer-events-none absolute bottom-0 left-10 w-80 h-80 bg-neutral-800/40 rounded-full blur-3xl animate-drift [animation-delay:-7s] hidden lg:block"
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28">
@@ -242,7 +246,9 @@ export function HeroBanner() {
               {/* Floating Product Highlight Card */}
               <Reveal trigger="mount" delay={1250} y={24} className="absolute bottom-5 inset-x-5">
                 <motion.div style={tilt ? { x: cardX, y: cardY, translateZ: 40 } : undefined}>
-                <div className="animate-float p-4 rounded-2xl bg-neutral-950/85 backdrop-blur-xl border border-white/10 shadow-xl flex items-center justify-between">
+                {/* Float lives on a plain wrapper: animating the blurred card itself can't be composited */}
+                <div className="animate-float will-change-transform">
+                <div className="p-4 rounded-2xl bg-neutral-950/85 backdrop-blur-xl border border-white/10 shadow-xl flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
                       SPOTLIGHT LOOK
@@ -261,6 +267,7 @@ export function HeroBanner() {
                   >
                     <ArrowUpRight className="w-4 h-4 transition-transform duration-500 group-hover/spot:rotate-45" />
                   </Link>
+                </div>
                 </div>
                 </motion.div>
               </Reveal>

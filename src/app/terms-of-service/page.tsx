@@ -3,8 +3,8 @@ import { SplitText } from "@/components/motion/SplitText";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 
 export const metadata = {
-  title: "Terms of Service | NextStore",
-  description: "Terms and conditions governing the use of NextStore and order processing.",
+  title: "Terms of Service | KINETIC // STUDIO",
+  description: "Terms and conditions governing the use of KINETIC // STUDIO and order processing.",
 };
 
 export default function TermsOfServicePage() {
@@ -29,7 +29,7 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-lg font-bold text-neutral-900 mb-2">1. Storefront Terms</h2>
           <p>
-            By accessing or purchasing from NextStore, you agree to comply with and be bound by these Terms of Service. These terms apply to all users of the site, including browsers, customers, and merchants.
+            By accessing or purchasing from KINETIC // STUDIO, you agree to comply with and be bound by these Terms of Service. These terms apply to all users of the site, including browsers, customers, and merchants.
           </p>
         </section>
 

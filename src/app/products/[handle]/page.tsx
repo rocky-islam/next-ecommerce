@@ -82,7 +82,7 @@ export default async function ProductPage({ params }: Props) {
     image: primaryImage?.url,
     brand: {
       "@type": "Brand",
-      name: product.vendor || "NextStore",
+      name: product.vendor || "KINETIC // STUDIO",
     },
     offers: {
       "@type": "Offer",

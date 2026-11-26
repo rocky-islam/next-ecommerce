@@ -45,7 +45,7 @@ export function ProductFilters({
   // Route updates run in a transition so we can show a pending state
   const [isPending, startTransition] = useTransition();
   const navigate = (url: string) => startTransition(() => router.push(url));
-  useOverlay(isMobileFiltersOpen, () => setIsMobileFiltersOpen(false));
+  const dialogRef = useOverlay(isMobileFiltersOpen, () => setIsMobileFiltersOpen(false));
 
   type QuickPill = {
     label: string;
@@ -349,7 +349,7 @@ export function ProductFilters({
       {/* Filter Drawer / Modal */}
       <AnimatePresence>
         {isMobileFiltersOpen && (
-          <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Refine catalog">
+          <div ref={dialogRef} className="fixed inset-0 z-50 outline-none" role="dialog" aria-modal="true" aria-label="Refine catalog">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

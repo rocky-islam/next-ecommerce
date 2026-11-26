@@ -1,13 +1,7 @@
 "use client";
 
-import { useRef, type ElementType } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from "motion/react";
+import { useRef, type CSSProperties, type ElementType } from "react";
+import { useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import { cn } from "@/lib/utils";
 
 type ScrollTextProps = {
@@ -20,7 +14,10 @@ type ScrollTextProps = {
 
 /**
  * Words light up one after another as the paragraph scrolls through the
- * viewport. Text stays a single real string for SEO and screen readers.
+ * viewport. Scroll progress is written to a single CSS variable (`--p`);
+ * each word derives its own opacity/offset from it in CSS, so a scroll
+ * frame costs one style write instead of one per word.
+ * Text stays a single real string for SEO and screen readers.
  */
 export function ScrollText({ text, as: Tag = "p", className, dim = 0.14 }: ScrollTextProps) {
   const ref = useRef<HTMLElement>(null);
@@ -31,41 +28,25 @@ export function ScrollText({ text, as: Tag = "p", className, dim = 0.14 }: Scrol
   });
   const words = text.split(" ");
 
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
+    ref.current?.style.setProperty("--p", p.toFixed(4));
+  });
+
   return (
-    <Tag ref={ref} className={cn("flex flex-wrap", className)}>
+    <Tag
+      ref={ref}
+      data-scroll-text={reduce ? undefined : ""}
+      className={cn("flex flex-wrap", className)}
+      style={{ "--n": words.length, "--dim": dim } as CSSProperties}
+    >
       <span className="sr-only">{text}</span>
       {words.map((word, i) => (
-        <Word
-          key={i}
-          progress={scrollYProgress}
-          range={[i / words.length, (i + 1) / words.length]}
-          dim={reduce ? 1 : dim}
-        >
-          {word}
-        </Word>
+        <span key={i} aria-hidden="true" className="mr-[0.25em] inline-block">
+          <span className="scroll-word inline-block" style={{ "--i": i } as CSSProperties}>
+            {word}
+          </span>
+        </span>
       ))}
     </Tag>
-  );
-}
-
-function Word({
-  children,
-  progress,
-  range,
-  dim,
-}: {
-  children: string;
-  progress: MotionValue<number>;
-  range: [number, number];
-  dim: number;
-}) {
-  const opacity = useTransform(progress, range, [dim, 1]);
-  const y = useTransform(progress, range, [dim === 1 ? 0 : 6, 0]);
-  return (
-    <span aria-hidden="true" className="mr-[0.25em] inline-block">
-      <motion.span className="inline-block" style={{ opacity, y }}>
-        {children}
-      </motion.span>
-    </span>
   );
 }

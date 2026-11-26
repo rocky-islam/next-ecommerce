@@ -3,7 +3,7 @@ import { SplitText } from "@/components/motion/SplitText";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 
 export const metadata = {
-  title: "Shipping & Delivery Policy | NextStore",
+  title: "Shipping & Delivery Policy | KINETIC // STUDIO",
   description: "Nationwide delivery timelines, shipping charges, and order fulfillment policies.",
 };
 

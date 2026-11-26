@@ -84,7 +84,7 @@ export function ProductGallery({
   };
 
   // Lightbox: Escape closes, scroll locked, arrows navigate
-  useOverlay(isFullscreen, () => setIsFullscreen(false));
+  const dialogRef = useOverlay(isFullscreen, () => setIsFullscreen(false));
   useEffect(() => {
     if (!isFullscreen || !hasMultiple) return;
     const onKey = (e: KeyboardEvent) => {
@@ -284,10 +284,11 @@ export function ProductGallery({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label={`${title} — image viewer`}
-            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 outline-none"
             onClick={() => setIsFullscreen(false)}
           >
             <motion.button
