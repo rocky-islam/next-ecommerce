@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useState, ViewTransition, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, ViewTransition, type CSSProperties } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { Box, ChevronLeft, ChevronRight, Loader2, Maximize2 } from "lucide-react";
 import { motion, AnimatePresence, type PanInfo } from "motion/react";
 import { ShopifyImage } from "@/lib/shopify/types";
 import { EASE, SPRING, toTransitionName } from "@/lib/motion";
 import { useFinePointer } from "@/hooks/use-media-query";
 import { useOverlay } from "@/hooks/use-overlay";
+import { ScrollRow } from "@/components/motion/ScrollRow";
+
+// three.js loads only when a shopper switches to the 3D view
+const FloatingProduct = dynamic(() => import("@/components/three/FloatingProduct"), {
+  ssr: false,
+  loading: () => null,
+});
 
 // Direction-aware slide: +1 = next (enter from right), -1 = previous
 const slideVariants = {
@@ -42,6 +50,16 @@ export function ProductGallery({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [direction, setDirection] = useState(1);
   const fine = useFinePointer();
+
+  // 3D view: the current photo, cut out and floating; drag to turn
+  const [is3D, setIs3D] = useState(false);
+  const [ready3D, setReady3D] = useState(false);
+  const [no3D, setNo3D] = useState(false);
+  const handle3DError = useCallback(() => {
+    setNo3D(true);
+    setIs3D(false);
+  }, []);
+  const handle3DReady = useCallback(() => setReady3D(true), []);
 
   // If the variant image URL changes from outside (e.g. user selected another size/color),
   // reset clickedUrl so the new variant image is displayed
@@ -152,6 +170,64 @@ export function ProductGallery({
         </motion.div>
       </AnimatePresence>
 
+      {/* 3D stage over the photo */}
+      <AnimatePresence>
+        {is3D && (
+          <motion.div
+            key="stage-3d"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: EASE.out }}
+            className="absolute inset-0 z-[5] bg-[radial-gradient(ellipse_at_50%_40%,#ffffff_0%,#F2F2EF_70%)]"
+          >
+            <FloatingProduct
+              key={currentImage.url}
+              src={currentImage.url}
+              tone="light"
+              onError={handle3DError}
+              onReady={handle3DReady}
+              className="absolute inset-0 cursor-grab"
+            />
+            <AnimatePresence>
+              {!ready3D && (
+                <motion.div
+                  key="loading"
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 grid place-items-center text-neutral-400"
+                >
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <span className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-neutral-600 ring-1 ring-neutral-200">
+              Drag to turn
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 2D / 3D toggle */}
+      {!no3D && (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.92 }}
+          type="button"
+          onClick={() => {
+            setReady3D(false);
+            setIs3D((v) => !v);
+          }}
+          aria-pressed={is3D}
+          aria-label={is3D ? "Show photo" : "View in 3D"}
+          className={`absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors cursor-pointer ${
+            is3D ? "bg-neutral-900 text-white" : "bg-white/90 text-neutral-800 hover:bg-neutral-900 hover:text-white"
+          }`}
+        >
+          <Box className="h-3.5 w-3.5" />
+          {is3D ? "2D" : "3D"}
+        </motion.button>
+      )}
+
       {/* Fullscreen view trigger button */}
       <motion.button
         whileHover={{ scale: 1.1 }}
@@ -219,10 +295,17 @@ export function ProductGallery({
       <div className="flex flex-col-reverse lg:flex-row gap-4 lg:gap-6 items-start">
         {/* Thumbnails (vertical on desktop, horizontal on mobile) */}
         {hasMultiple && (
+          <ScrollRow
+            label="Product images"
+            activeSelector="[aria-current='true']"
+            activeKey={String(activeIndex)}
+            className="w-full lg:w-[5.5rem] shrink-0"
+            trackClassName="lg:overflow-x-visible lg:overflow-y-auto max-h-[580px]"
+          >
           <div
             data-stagger="mount"
             style={{ "--d": "250ms", "--step": "60ms", "--ry": "12px" } as CSSProperties}
-            className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto no-scrollbar p-1 shrink-0 w-full lg:w-[5.5rem] max-h-[580px]"
+            className="flex lg:flex-col gap-3 p-1 w-max lg:w-auto"
           >
             {allImages.map((img, index) => {
               const isSelected = index === activeIndex;
@@ -260,6 +343,7 @@ export function ProductGallery({
               );
             })}
           </div>
+          </ScrollRow>
         )}
 
         {/* Main Display Image (morph target for the product card) */}

@@ -5,6 +5,7 @@ import { getProducts } from "@/lib/shopify/products";
 import { ProductSortKey } from "@/lib/shopify/types";
 import { ProductFilters } from "@/components/product/ProductFilters";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { DensityProductGrid } from "@/components/product/GridDensity";
 import { ProductGridSkeleton } from "@/components/product/ProductSkeleton";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { SplitText } from "@/components/motion/SplitText";
@@ -115,7 +116,11 @@ async function ProductsContent({
         currentTag={currentTag}
       />
 
-      <ProductGrid products={products} priorityCount={8} />
+      {products.length > 0 ? (
+        <DensityProductGrid products={products} priorityCount={8} />
+      ) : (
+        <ProductGrid products={products} />
+      )}
 
       {/* Pagination */}
       {pageInfo.hasNextPage && pageInfo.endCursor && (

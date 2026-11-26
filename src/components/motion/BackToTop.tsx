@@ -39,7 +39,7 @@ export function BackToTop() {
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
           transition={{ duration: 0.45, ease: EASE.out }}
-          className="group fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-40 grid h-12 w-12 place-items-center rounded-full bg-neutral-950/90 text-white shadow-2xl ring-1 ring-white/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="back-to-top group fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-40 grid h-12 w-12 place-items-center rounded-full bg-neutral-950/90 text-white shadow-2xl ring-1 ring-white/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           <svg viewBox="0 0 48 48" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
             <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />

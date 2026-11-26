@@ -8,6 +8,10 @@ import { EditorialBanner } from "@/components/home/EditorialBanner";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { BrandMarquee } from "@/components/home/BrandMarquee";
 import { ManifestoSection } from "@/components/home/ManifestoSection";
+import { CollectionRail } from "@/components/home/CollectionRail";
+import { InFocus } from "@/components/home/InFocus";
+import { KineticLab } from "@/components/home/KineticLab";
+import { formatPrice } from "@/lib/utils";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -58,6 +62,28 @@ async function NewArrivalsSection() {
   );
 }
 
+async function KineticLabSection() {
+  // #2 best-seller (In Focus already features #1)
+  const products = await getFeaturedProducts(2);
+  const pick = products[1] ?? products[0];
+  const image = pick?.featuredImage ?? pick?.images?.nodes[0];
+  return (
+    <KineticLab
+      product={
+        pick && image
+          ? {
+              title: pick.title,
+              handle: pick.handle,
+              vendor: pick.vendor,
+              price: formatPrice(pick.priceRange.minVariantPrice.amount, pick.priceRange.minVariantPrice.currencyCode),
+              image: { url: image.url, altText: image.altText },
+            }
+          : undefined
+      }
+    />
+  );
+}
+
 export default function HomePage() {
   return (
     <PageTransition>
@@ -70,6 +96,11 @@ export default function HomePage() {
 
       {/* Visual Category Lookbook Grid */}
       <CategoryGrid />
+
+      {/* Real Shopify collections rail */}
+      <Suspense fallback={<div className="py-20 sm:py-28" aria-hidden="true"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-5 overflow-hidden">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-[26rem] w-[17.5rem] shrink-0 rounded-3xl bg-neutral-100 animate-pulse" />)}</div></div>}>
+        <CollectionRail />
+      </Suspense>
 
       {/* Featured Products */}
       <Suspense
@@ -102,6 +133,16 @@ export default function HomePage() {
         }
       >
         <NewArrivalsSection />
+      </Suspense>
+
+      {/* Pinned best-seller spotlight */}
+      <Suspense fallback={null}>
+        <InFocus />
+      </Suspense>
+
+      {/* three.js kinetic sculpture + comfort features */}
+      <Suspense fallback={<KineticLab />}>
+        <KineticLabSection />
       </Suspense>
 
       {/* Oversized brand type band */}

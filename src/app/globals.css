@@ -209,6 +209,31 @@ body {
   background-position: 0% 100%;
 }
 
+/* ── Scroll row: edge fades only where more content is hidden ── */
+@property --fl {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fr {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+.scroll-row {
+  --fl: 0px;
+  --fr: 0px;
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fl), #000 calc(100% - var(--fr)), transparent 100%);
+  transition: --fl 300ms ease, --fr 300ms ease;
+  scroll-padding-inline: 48px;
+}
+.scroll-row[data-fade-left] {
+  --fl: 56px;
+}
+.scroll-row[data-fade-right] {
+  --fr: 56px;
+}
+
 /* ── Marquee ── */
 @keyframes marquee-x {
   to {
@@ -274,6 +299,14 @@ body {
 .animate-gradient-pan-once {
   background-size: 200% 100%;
   animation: gradient-pan 3s linear 3 both;
+}
+
+/* Lift the back-to-top button above the product page's sticky buy bar */
+.back-to-top {
+  transition: bottom 500ms var(--ease-out-expo);
+}
+body:has([data-sticky-buy]) .back-to-top {
+  bottom: 6.5rem;
 }
 
 /* Looping decoration pauses while its section is off-screen */

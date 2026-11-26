@@ -8,9 +8,7 @@ import {
   useMotionValue,
   useReducedMotion,
   useScroll,
-  useSpring,
   useTransform,
-  useVelocity,
 } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -44,22 +42,27 @@ export function VelocityMarquee({
   const reduce = useReducedMotion();
 
   const base = useMotionValue(0);
+  const skewX = useMotionValue(0);
   const { scrollY } = useScroll();
-  const velocity = useVelocity(scrollY);
-  const smooth = useSpring(velocity, { damping: 50, stiffness: 400 });
-  const factor = useTransform(smooth, [-1000, 0, 1000], [-4, 0, 4], { clamp: false });
-  const skewX = useTransform(smooth, [-2000, 0, 2000], [maxSkew, 0, -maxSkew], { clamp: true });
   // Four copies; one copy = 25% of the track.
   const x = useTransform(base, (v) => `${wrap(-25, 0, v)}%`);
   const direction = useRef(1);
+  const boost = useRef(0);
 
+  // All per-frame work (velocity sampling, easing, skew) happens here and
+  // only while on screen, so off-screen marquees cost nothing on scroll.
   useAnimationFrame((_, delta) => {
     if (!inView || reduce) return;
-    const f = factor.get();
-    if (f < 0) direction.current = -1;
-    else if (f > 0) direction.current = 1;
-    const move = direction.current * baseVelocity * (delta / 1000) * (1 + Math.abs(f));
+    const v = scrollY.getVelocity(); // px/s
+    // Ease toward the target boost so speed changes feel weighted
+    const target = Math.max(-4, Math.min(4, v / 250));
+    boost.current += (target - boost.current) * Math.min(1, delta / 120);
+    if (boost.current < -0.05) direction.current = -1;
+    else if (boost.current > 0.05) direction.current = 1;
+    const move = direction.current * baseVelocity * (delta / 1000) * (1 + Math.abs(boost.current));
     base.set(base.get() - move / 4);
+    const skew = Math.max(-maxSkew, Math.min(maxSkew, -(boost.current / 6) * maxSkew));
+    if (Math.abs(skew - skewX.get()) > 0.01) skewX.set(skew);
   });
 
   return (

@@ -6,6 +6,9 @@ import { Filter, SlidersHorizontal, X } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "motion/react";
 import { EASE, SPRING } from "@/lib/motion";
 import { useOverlay } from "@/hooks/use-overlay";
+import { ScrollRow } from "@/components/motion/ScrollRow";
+import { RollingValue } from "@/components/motion/RollingValue";
+import { DensityToggle } from "./GridDensity";
 
 const drawerSections = {
   hidden: {},
@@ -153,7 +156,12 @@ export function ProductFilters({
     <div className="space-y-5 mb-10" aria-busy={isPending}>
       {/* Category Horizontal Filter Pills — active background glides */}
       <LayoutGroup id="filter-pills">
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+      <ScrollRow
+        label="Quick categories"
+        activeSelector="[data-active]"
+        activeKey={`${currentVendor}|${currentType}|${currentTag}|${currentQuery}`}
+        trackClassName="flex items-center gap-2 py-1"
+      >
         {quickPills.map((pill) => {
           const isAll =
             Object.keys(pill.params).length === 0 &&
@@ -174,7 +182,9 @@ export function ProductFilters({
               type="button"
               whileTap={{ scale: 0.94 }}
               onClick={() => applyPill(pill.params)}
-              className={`relative isolate px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-300 cursor-pointer ${
+              data-active={isActive || undefined}
+              aria-pressed={Boolean(isActive)}
+              className={`relative isolate shrink-0 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-300 cursor-pointer ${
                 isActive
                   ? "text-white"
                   : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
@@ -191,7 +201,7 @@ export function ProductFilters({
             </motion.button>
           );
         })}
-      </div>
+      </ScrollRow>
       </LayoutGroup>
 
       {/* Control Bar: Product Count, Active Chips & Sort Select */}
@@ -216,7 +226,7 @@ export function ProductFilters({
             <p className="text-xs font-mono text-neutral-500 uppercase tracking-wider mr-2 flex items-center gap-1">
               Showing{" "}
               <span className={`font-bold text-neutral-900 transition-opacity ${isPending ? "opacity-40" : ""}`}>
-                {totalCount}
+                <RollingValue value={totalCount} />
               </span>{" "}
               styles
             </p>
@@ -316,6 +326,9 @@ export function ProductFilters({
         </div>
 
         <div className="flex items-center gap-3 ml-auto">
+          {/* Grid density (layout-animated) */}
+          <DensityToggle />
+
           {/* Sort Selector */}
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-400 hidden sm:block" />

@@ -60,3 +60,32 @@ export const GET_COLLECTION_BY_HANDLE_QUERY = `
     }
   }
 `;
+
+/** Collections with a cover drawn from their first product (none have their own image). */
+export const GET_COLLECTION_COVERS_QUERY = `
+  query GetCollectionCovers($first: Int = 20) {
+    collections(first: $first) {
+      nodes {
+        id
+        title
+        handle
+        image {
+          url
+          altText
+          width
+          height
+        }
+        products(first: 1, sortKey: BEST_SELLING) {
+          nodes {
+            featuredImage {
+              url
+              altText
+              width
+              height
+            }
+          }
+        }
+      }
+    }
+  }
+`;

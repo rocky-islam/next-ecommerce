@@ -2,8 +2,9 @@ import { shopifyFetch } from "./client";
 import {
   GET_COLLECTIONS_QUERY,
   GET_COLLECTION_BY_HANDLE_QUERY,
+  GET_COLLECTION_COVERS_QUERY,
 } from "./queries/collection";
-import { Collection, PageInfo, Product } from "./types";
+import { Collection, PageInfo, Product, ShopifyImage } from "./types";
 
 export async function getCollections(first: number = 20): Promise<Collection[]> {
   const data = await shopifyFetch<{
@@ -81,4 +82,44 @@ export async function getCollection(
       endCursor: null,
     },
   };
+}
+
+export type CollectionCover = {
+  id: string;
+  title: string;
+  handle: string;
+  image: ShopifyImage | null;
+};
+
+/**
+ * Collections for merchandising rails. Uses the collection image when set,
+ * otherwise its best-selling product's photo. Skips the storefront's
+ * "frontpage" system collection and anything without an image.
+ */
+export async function getCollectionCovers(first: number = 20): Promise<CollectionCover[]> {
+  const data = await shopifyFetch<{
+    collections: {
+      nodes: {
+        id: string;
+        title: string;
+        handle: string;
+        image: ShopifyImage | null;
+        products: { nodes: { featuredImage: ShopifyImage | null }[] };
+      }[];
+    };
+  }>({
+    query: GET_COLLECTION_COVERS_QUERY,
+    variables: { first },
+    revalidate: 300,
+  });
+
+  return (data.collections?.nodes || [])
+    .filter((c) => c.handle !== "frontpage")
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      handle: c.handle,
+      image: c.image ?? c.products.nodes[0]?.featuredImage ?? null,
+    }))
+    .filter((c) => c.image !== null);
 }

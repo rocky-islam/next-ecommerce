@@ -8,6 +8,8 @@ import {
   getProductRecommendations,
 } from "@/lib/shopify/products";
 import { ProductDetails } from "@/components/product/ProductInfo";
+import { ProductKineticBand } from "@/components/product/ProductKineticBand";
+import { ProductSpecSheet } from "@/components/product/ProductSpecSheet";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductGridSkeleton } from "@/components/product/ProductSkeleton";
 import { PageTransition } from "@/components/motion/PageTransition";
@@ -125,6 +127,10 @@ export default async function ProductPage({ params }: Props) {
 
       {/* Product Details Section */}
       <ProductDetails product={product} />
+
+      {/* Kinetic name band + data-driven spec sheet */}
+      <ProductKineticBand title={product.title} vendor={product.vendor} />
+      <ProductSpecSheet product={product} />
 
       {/* Related Products */}
       <Suspense fallback={<ProductGridSkeleton count={4} />}>

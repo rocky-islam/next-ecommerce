@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Loader2,
   Minus,
@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Lock,
 } from "lucide-react";
-import { motion, AnimatePresence, LayoutGroup } from "motion/react";
+import { motion, AnimatePresence, LayoutGroup, useMotionValueEvent, useScroll } from "motion/react";
 import { EASE, SPRING } from "@/lib/motion";
 import { SplitText } from "@/components/motion/SplitText";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
@@ -21,6 +21,7 @@ import { Product, ProductVariant } from "@/lib/shopify/types";
 import { calculateDiscountPercentage, formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { ProductGallery } from "./ProductGallery";
+import { StickyBuyBar } from "./StickyBuyBar";
 
 const labelSwap = {
   initial: { y: 16, opacity: 0 },
@@ -104,6 +105,26 @@ export function ProductDetails({ product }: { product: Product }) {
   );
 
   const isAvailable = selectedVariant ? selectedVariant.availableForSale : false;
+
+  // Sticky purchase bar: shown once the main buttons scroll above the viewport
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [ctaPassed, setCtaPassed] = useState(false);
+  // Scroll position check (not IntersectionObserver): a fast fling or jump
+  // can carry the buttons from below to above the viewport without ever
+  // "intersecting", which an observer would never report.
+  const { scrollY } = useScroll();
+  const checkCta = () => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const passed = el.getBoundingClientRect().bottom < 0;
+    setCtaPassed((prev) => (prev === passed ? prev : passed));
+  };
+  useMotionValueEvent(scrollY, "change", checkCta);
+  useEffect(checkCta, []);
+  const optionSummary = Object.entries(selectedOptions)
+    .filter(([, v]) => !v.startsWith("#"))
+    .map(([k, v]) => (/size/i.test(k) ? `Size ${v}` : v))
+    .join(" · ");
 
   const handleOptionSelect = (optionName: string, value: string) => {
     setSelectedOptions((prev) => ({
@@ -354,7 +375,7 @@ export function ProductDetails({ product }: { product: Product }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+          <div ref={ctaRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
             {/* Add to Bag: label morphs through loading to a drawn check */}
             <motion.button
               whileHover={{ scale: 1.015 }}
@@ -482,6 +503,18 @@ export function ProductDetails({ product }: { product: Product }) {
           </AccordionItem>
         </div>
       </StaggerGroup>
+
+      <StickyBuyBar
+        open={ctaPassed}
+        title={product.title}
+        image={selectedVariant?.image || product.featuredImage}
+        summary={optionSummary}
+        price={formatPrice(currentPrice.amount, currentPrice.currencyCode)}
+        isAvailable={isAvailable}
+        isAdding={isAdding}
+        justAdded={justAdded}
+        onAdd={handleAddToCart}
+      />
     </div>
   );
 }
