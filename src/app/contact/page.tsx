@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Mail, Phone, MapPin, CheckCircle2, Loader2, Send } from "lucide-react";
+import { motion } from "motion/react";
 import { submitContactAction, ContactFormState } from "@/actions/contact";
 
 const initialState: ContactFormState = {
@@ -147,10 +148,12 @@ export default function ContactPage() {
                 )}
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isPending}
-                className="w-full sm:w-auto px-8 py-3.5 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-neutral-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full sm:w-auto px-8 py-3.5 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-neutral-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-md"
               >
                 {isPending ? (
                   <>
@@ -163,7 +166,7 @@ export default function ContactPage() {
                     <span>Send Message</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </form>
           )}
         </div>

@@ -1,14 +1,16 @@
-export const metadata = {
-  title: "Frequently Asked Questions | NextStore",
-  description:
-    "Common questions regarding orders, payment via Shopify, sizing, delivery timelines, and returns.",
-};
+"use client";
+
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function FAQPage() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
   const faqs = [
     {
       q: "Are all products 100% authentic?",
-      a: "Yes. All products listed on NextStore are genuine, brand-authorized inventory from official distributors and heritage brands including Bata, Hush Puppies, and Bubblegummers.",
+      a: "Yes. All products listed on KINETIC // STUDIO are genuine, brand-authorized inventory from official distributors and heritage brands including Bata, Hush Puppies, Power, and Bubblegummers.",
     },
     {
       q: "How does checkout and payment work?",
@@ -32,34 +34,70 @@ export default function FAQPage() {
     },
   ];
 
+  const toggleFAQ = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-      <div className="text-center mb-16">
-        <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">
-          Support Center
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
+        className="text-center mb-16"
+      >
+        <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 font-mono">
+          CLIENT CONCIERGE
         </span>
-        <h1 className="mt-2 text-3xl sm:text-5xl font-black text-neutral-900 font-sans tracking-tight">
+        <h1 className="mt-2 text-3xl sm:text-5xl font-black text-neutral-900 font-sans tracking-tight uppercase">
           Frequently Asked Questions
         </h1>
-        <p className="mt-4 text-sm text-neutral-500 max-w-xl mx-auto">
-          Everything you need to know about shopping, orders, delivery, and authenticity.
+        <p className="mt-4 text-xs sm:text-sm text-neutral-500 max-w-xl mx-auto leading-relaxed font-light">
+          Everything you need to know regarding authentication, 64-district delivery timelines, and our 7-day exchange protocol.
         </p>
-      </div>
+      </motion.div>
 
-      <div className="space-y-6">
-        {faqs.map((faq, index) => (
-          <div
-            key={index}
-            className="p-6 sm:p-8 rounded-2xl bg-[#F7F7F5] border border-neutral-100"
-          >
-            <h3 className="text-base sm:text-lg font-bold text-neutral-900">
-              {faq.q}
-            </h3>
-            <p className="mt-3 text-sm text-neutral-600 leading-relaxed whitespace-pre-line">
-              {faq.a}
-            </p>
-          </div>
-        ))}
+      <div className="space-y-4">
+        {faqs.map((faq, index) => {
+          const isOpen = openIndex === index;
+          return (
+            <motion.div
+              key={faq.q}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.06 }}
+              className="rounded-2xl bg-[#FBFBFA] border border-neutral-200/80 overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() => toggleFAQ(index)}
+                className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-neutral-900 cursor-pointer"
+              >
+                <span>{faq.q}</span>
+                <motion.div
+                  animate={{ rotate: isOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="shrink-0 text-neutral-400"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </motion.div>
+              </button>
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    className="overflow-hidden px-6 pb-6 pt-1 text-xs sm:text-sm text-neutral-600 leading-relaxed whitespace-pre-line border-t border-neutral-100/60"
+                  >
+                    {faq.a}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

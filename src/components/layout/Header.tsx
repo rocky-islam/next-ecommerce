@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Search, ShoppingBag, Menu } from "lucide-react";
+import { motion } from "motion/react";
 import { useCart } from "@/context/cart-context";
 import { MobileNav } from "./MobileNav";
 import { SearchModal } from "@/components/search/SearchModal";
@@ -29,14 +30,15 @@ export function Header() {
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Left: Mobile hamburger menu */}
             <div className="flex items-center lg:hidden">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.9 }}
                 type="button"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 -ml-2 text-neutral-400 hover:text-white rounded-lg transition-colors"
+                className="p-2 -ml-2 text-neutral-400 hover:text-white rounded-lg transition-colors cursor-pointer"
                 aria-label="Open navigation menu"
               >
                 <Menu className="w-5 h-5" />
-              </button>
+              </motion.button>
             </div>
 
             {/* Brand Logo - Bespoke Minimalist Luxury */}
@@ -51,7 +53,7 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation with Hover underline animation */}
             <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
               {navLinks.map((link) => (
                 <Link
@@ -66,32 +68,40 @@ export function Header() {
 
             {/* Right: Search & Cart actions */}
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.92 }}
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2.5 text-neutral-300 hover:text-white rounded-full hover:bg-white/10 transition-colors flex items-center gap-2 text-xs"
+                className="p-2.5 text-neutral-300 hover:text-white rounded-full hover:bg-white/10 transition-colors flex items-center gap-2 text-xs cursor-pointer"
                 aria-label="Search catalog"
               >
                 <Search className="w-4 h-4" />
                 <span className="hidden md:inline-block text-[11px] font-bold tracking-widest uppercase text-neutral-400">
                   Search
                 </span>
-              </button>
+              </motion.button>
 
-              {/* Cart Button */}
-              <button
+              {/* Cart Button with spring badge pulse */}
+              <motion.button
+                whileTap={{ scale: 0.92 }}
                 type="button"
                 onClick={openCart}
-                className="p-2.5 text-neutral-300 hover:text-white rounded-full hover:bg-white/10 transition-colors relative"
+                className="p-2.5 text-neutral-300 hover:text-white rounded-full hover:bg-white/10 transition-colors relative cursor-pointer"
                 aria-label={`Shopping bag with ${totalQuantity} items`}
               >
                 <ShoppingBag className="w-4 h-4" />
                 {totalQuantity > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-white text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-lg">
+                  <motion.span
+                    key={totalQuantity}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    className="absolute -top-1 -right-1 bg-white text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-lg"
+                  >
                     {totalQuantity > 99 ? "99+" : totalQuantity}
-                  </span>
+                  </motion.span>
                 )}
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>

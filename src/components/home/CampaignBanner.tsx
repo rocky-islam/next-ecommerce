@@ -1,18 +1,27 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
 
 export function CampaignBanner() {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="relative rounded-3xl overflow-hidden min-h-[440px] flex items-center bg-neutral-900 border border-neutral-800 shadow-2xl">
-        {/* Background Image */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }}
+        className="relative rounded-3xl overflow-hidden min-h-[440px] flex items-center bg-neutral-900 border border-neutral-800 shadow-2xl group"
+      >
+        {/* Background Image with slow cinematic scale on hover */}
         <Image
           src="https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=1200&auto=format&fit=crop"
           alt="Footwear capsule campaign"
           fill
           sizes="(max-width: 1280px) 100vw, 1200px"
-          className="object-cover object-center"
+          className="object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-106"
         />
 
         {/* Gradient Overlay */}
@@ -35,16 +44,18 @@ export function CampaignBanner() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              href="/products?sort=newest"
-              className="px-8 py-3.5 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-neutral-200 transition-all flex items-center gap-2 active:scale-[0.98] shadow-lg"
-            >
-              <span>Shop The Capsule</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                href="/products?sort=newest"
+                className="px-8 py-3.5 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-neutral-200 transition-all flex items-center gap-2 shadow-lg block"
+              >
+                <span>Shop The Capsule</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

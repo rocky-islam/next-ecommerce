@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Filter, SlidersHorizontal, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 type ProductFiltersProps = {
   totalCount?: number;
@@ -146,9 +147,10 @@ export function ProductFilters({
             (pill.params.tag && pill.params.tag === currentTag);
 
           return (
-            <button
+            <motion.button
               key={pill.label}
               type="button"
+              whileTap={{ scale: 0.94 }}
               onClick={() => applyPill(pill.params)}
               className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 isActive
@@ -157,7 +159,7 @@ export function ProductFilters({
               }`}
             >
               {pill.label}
-            </button>
+            </motion.button>
           );
         })}
       </div>
@@ -270,132 +272,145 @@ export function ProductFilters({
       </div>
 
       {/* Filter Drawer / Modal */}
-      {isMobileFiltersOpen && (
-        <div className="fixed inset-0 z-50">
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs"
-            onClick={() => setIsMobileFiltersOpen(false)}
-          />
-          <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col z-10 p-6 animate-in slide-in-from-right duration-250">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
-              <h3 className="text-base font-bold text-neutral-900 uppercase font-sans tracking-wide">
-                Refine Catalog
-              </h3>
-              <button
-                onClick={() => setIsMobileFiltersOpen(false)}
-                className="p-1 text-neutral-400 hover:text-black"
-                aria-label="Close filters"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <AnimatePresence>
+        {isMobileFiltersOpen && (
+          <div className="fixed inset-0 z-50">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs cursor-pointer"
+              onClick={() => setIsMobileFiltersOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 280 }}
+              className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col z-10 p-6"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
+                <h3 className="text-base font-bold text-neutral-900 uppercase font-sans tracking-wide">
+                  Refine Catalog
+                </h3>
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="p-1 text-neutral-400 hover:text-black cursor-pointer"
+                  aria-label="Close filters"
+                >
+                  <X className="w-5 h-5" />
+                </motion.button>
+              </div>
 
-            <div className="py-6 space-y-6 flex-1 overflow-y-auto">
-              {/* Brand Section */}
-              <div>
-                <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
-                  Brand / Label
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {brandList.map((b) => {
-                    const isSelected = currentVendor === b.value;
-                    return (
-                      <button
-                        key={b.value}
-                        onClick={() => {
-                          setSingleParam("vendor", isSelected ? "" : b.value);
-                          setIsMobileFiltersOpen(false);
-                        }}
-                        className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                          isSelected
-                            ? "bg-black text-white border-black"
-                            : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
-                        }`}
-                      >
-                        {b.label}
-                      </button>
-                    );
-                  })}
+              <div className="py-6 space-y-6 flex-1 overflow-y-auto">
+                {/* Brand Section */}
+                <div>
+                  <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
+                    Brand / Label
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {brandList.map((b) => {
+                      const isSelected = currentVendor === b.value;
+                      return (
+                        <button
+                          key={b.value}
+                          onClick={() => {
+                            setSingleParam("vendor", isSelected ? "" : b.value);
+                            setIsMobileFiltersOpen(false);
+                          }}
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                            isSelected
+                              ? "bg-black text-white border-black"
+                              : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
+                          }`}
+                        >
+                          {b.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Product Type Section */}
+                <div>
+                  <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
+                    Product Type
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {typeList.map((t) => {
+                      const isSelected = currentType === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          onClick={() => {
+                            setSingleParam("type", isSelected ? "" : t.value);
+                            setIsMobileFiltersOpen(false);
+                          }}
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                            isSelected
+                              ? "bg-black text-white border-black"
+                              : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Price Band Section */}
+                <div>
+                  <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
+                    Price Tier (BDT)
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {priceBands.map((p) => {
+                      const isSelected = currentTag === p.tag;
+                      return (
+                        <button
+                          key={p.tag}
+                          onClick={() => {
+                            setSingleParam("tag", isSelected ? "" : p.tag);
+                            setIsMobileFiltersOpen(false);
+                          }}
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                            isSelected
+                              ? "bg-black text-white border-black"
+                              : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Product Type Section */}
-              <div>
-                <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
-                  Product Type
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {typeList.map((t) => {
-                    const isSelected = currentType === t.value;
-                    return (
-                      <button
-                        key={t.value}
-                        onClick={() => {
-                          setSingleParam("type", isSelected ? "" : t.value);
-                          setIsMobileFiltersOpen(false);
-                        }}
-                        className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                          isSelected
-                            ? "bg-black text-white border-black"
-                            : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
-                        }`}
-                      >
-                        {t.label}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="pt-4 border-t border-neutral-200 flex gap-3">
+                <button
+                  onClick={() => {
+                    clearAllFilters();
+                    setIsMobileFiltersOpen(false);
+                  }}
+                  className="flex-1 py-3 bg-neutral-100 text-neutral-800 text-xs font-bold uppercase rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                >
+                  Reset All
+                </button>
+                <button
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="flex-1 py-3 bg-black text-white text-xs font-bold uppercase rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
+                >
+                  Apply
+                </button>
               </div>
-
-              {/* Price Band Section */}
-              <div>
-                <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
-                  Price Tier (BDT)
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {priceBands.map((p) => {
-                    const isSelected = currentTag === p.tag;
-                    return (
-                      <button
-                        key={p.tag}
-                        onClick={() => {
-                          setSingleParam("tag", isSelected ? "" : p.tag);
-                          setIsMobileFiltersOpen(false);
-                        }}
-                        className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                          isSelected
-                            ? "bg-black text-white border-black"
-                            : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-neutral-200 flex gap-3">
-              <button
-                onClick={() => {
-                  clearAllFilters();
-                  setIsMobileFiltersOpen(false);
-                }}
-                className="flex-1 py-3 bg-neutral-100 text-neutral-800 text-xs font-bold uppercase rounded-lg hover:bg-neutral-200 transition-colors"
-              >
-                Reset All
-              </button>
-              <button
-                onClick={() => setIsMobileFiltersOpen(false)}
-                className="flex-1 py-3 bg-black text-white text-xs font-bold uppercase rounded-lg hover:bg-neutral-800 transition-colors"
-              >
-                Apply
-              </button>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }

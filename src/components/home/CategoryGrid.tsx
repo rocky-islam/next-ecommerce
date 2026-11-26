@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { motion } from "motion/react";
 
 export function CategoryGrid() {
   const categories = [
@@ -57,7 +60,13 @@ export function CategoryGrid() {
   return (
     <section className="py-20 sm:py-28 bg-[#FBFBFA]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-12"
+        >
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 mb-2">
               CATALOG DIVISIONS
@@ -73,49 +82,61 @@ export function CategoryGrid() {
             <span>View Full Directory</span>
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
-        </div>
+        </motion.div>
 
-        {/* 6-Card High-Fashion Grid */}
+        {/* 6-Card High-Fashion Grid with Staggered Motion */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((cat) => (
-            <Link
+          {categories.map((cat, idx) => (
+            <motion.div
               key={cat.title}
-              href={cat.href}
-              className="group relative aspect-4/5 rounded-3xl overflow-hidden bg-neutral-900 shadow-md border border-neutral-200/60 block"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{
+                duration: 0.6,
+                delay: idx * 0.08,
+                ease: [0.16, 1, 0.3, 1] as const,
+              }}
+              whileHover={{ y: -6 }}
             >
-              {/* Background Photography */}
-              <Image
-                src={cat.image}
-                alt={cat.title}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
-              />
+              <Link
+                href={cat.href}
+                className="group relative aspect-4/5 rounded-3xl overflow-hidden bg-neutral-900 shadow-md border border-neutral-200/60 block"
+              >
+                {/* Background Photography */}
+                <Image
+                  src={cat.image}
+                  alt={cat.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
+                />
 
-              {/* Gradient Scrim */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-black/10 transition-opacity group-hover:opacity-90" />
+                {/* Gradient Scrim */}
+                <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-black/10 transition-opacity group-hover:opacity-90" />
 
-              {/* Content overlay */}
-              <div className="absolute inset-0 p-6 flex flex-col justify-between text-white z-10">
-                <div className="flex justify-between items-start">
-                  <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest rounded-md bg-white/20 backdrop-blur-md text-white border border-white/20">
-                    {cat.tag}
-                  </span>
-                  <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center transition-transform group-hover:translate-x-1 group-hover:-translate-y-1 shadow-lg">
-                    <ArrowUpRight className="w-4 h-4" />
+                {/* Content overlay */}
+                <div className="absolute inset-0 p-6 flex flex-col justify-between text-white z-10">
+                  <div className="flex justify-between items-start">
+                    <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest rounded-md bg-white/20 backdrop-blur-md text-white border border-white/20">
+                      {cat.tag}
+                    </span>
+                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 shadow-lg group-hover:scale-110">
+                      <ArrowUpRight className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight uppercase font-sans">
+                      {cat.title}
+                    </h3>
+                    <p className="mt-1.5 text-xs text-neutral-300 font-light line-clamp-2 leading-relaxed">
+                      {cat.subtitle}
+                    </p>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight uppercase font-sans">
-                    {cat.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs text-neutral-300 font-light line-clamp-2 leading-relaxed">
-                    {cat.subtitle}
-                  </p>
-                </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </div>

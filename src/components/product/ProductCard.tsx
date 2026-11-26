@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Plus, Check, Loader2 } from "lucide-react";
+import { motion, useMotionValue, useSpring } from "motion/react";
 import { Product } from "@/lib/shopify/types";
 import { calculateDiscountPercentage, formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -18,6 +19,32 @@ export function ProductCard({
   const { addItem, isMutating } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Subtle 3D perspective tilt
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+
+  const rotateX = useSpring(useMotionValue(0), { stiffness: 180, damping: 25 });
+  const rotateY = useSpring(useMotionValue(0), { stiffness: 180, damping: 25 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+
+    mouseX.set(x);
+    mouseY.set(y);
+
+    rotateX.set((y - 0.5) * -8);
+    rotateY.set((x - 0.5) * 8);
+  };
+
+  const handleMouseLeave = () => {
+    rotateX.set(0);
+    rotateY.set(0);
+  };
 
   const price = product.priceRange.minVariantPrice;
   const compareAtPrice = product.compareAtPriceRange?.minVariantPrice;
@@ -53,11 +80,26 @@ export function ProductCard({
   };
 
   return (
-    <div className="group relative flex flex-col bg-white">
+    <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] as const }}
+      style={{
+        perspective: 1000,
+        rotateX,
+        rotateY,
+        transformStyle: "preserve-3d",
+      }}
+      className="group relative flex flex-col bg-white"
+    >
       {/* Image container */}
       <Link
         href={`/products/${product.handle}`}
-        className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#F4F4F2] border border-neutral-200/60 transition-all duration-300 group-hover:border-neutral-400 group-hover:shadow-md"
+        className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#F4F4F2] border border-neutral-200/60 transition-all duration-500 group-hover:border-neutral-400 group-hover:shadow-xl block"
       >
         {primaryImage ? (
           <>
@@ -87,8 +129,11 @@ export function ProductCard({
           </div>
         )}
 
+        {/* Ambient subtle shine overlay */}
+        <div className="absolute inset-0 bg-linear-to-tr from-white/0 via-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
           {!isAvailable && (
             <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest bg-neutral-900 text-white rounded-md shadow-xs">
               Sold Out
@@ -109,11 +154,12 @@ export function ProductCard({
                 Select Options
               </span>
             ) : (
-              <button
+              <motion.button
                 type="button"
+                whileTap={{ scale: 0.95 }}
                 onClick={handleQuickAdd}
                 disabled={isAdding || isMutating}
-                className="w-full py-2.5 px-3 bg-black text-white text-[11px] font-bold uppercase tracking-wider rounded-xl shadow-lg flex items-center justify-center gap-1.5 hover:bg-neutral-800 transition-colors disabled:opacity-70"
+                className="w-full py-2.5 px-3 bg-black text-white text-[11px] font-bold uppercase tracking-wider rounded-xl shadow-lg flex items-center justify-center gap-1.5 hover:bg-neutral-800 transition-colors disabled:opacity-70 cursor-pointer"
               >
                 {isAdding ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -128,7 +174,7 @@ export function ProductCard({
                     <span>Quick Bag</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             )}
           </div>
         )}
@@ -160,6 +206,6 @@ export function ProductCard({
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

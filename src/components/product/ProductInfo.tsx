@@ -14,6 +14,7 @@ import {
   RotateCcw,
   Lock,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Product, ProductVariant } from "@/lib/shopify/types";
 import { calculateDiscountPercentage, formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -219,11 +220,12 @@ export function ProductDetails({ product }: { product: Product }) {
                         const isComboAvailable = match ? match.availableForSale : false;
 
                         return (
-                          <button
+                          <motion.button
                             key={val}
                             type="button"
+                            whileTap={{ scale: 0.94 }}
                             onClick={() => handleOptionSelect(option.name, val)}
-                            className={`min-w-14 px-4 py-2.5 text-xs font-bold uppercase rounded-xl border transition-all ${
+                            className={`min-w-14 px-4 py-2.5 text-xs font-bold uppercase rounded-xl border transition-all cursor-pointer ${
                               isSelected
                                 ? "bg-black text-white border-black shadow-md scale-102"
                                 : isComboAvailable
@@ -232,7 +234,7 @@ export function ProductDetails({ product }: { product: Product }) {
                             }`}
                           >
                             {val}
-                          </button>
+                          </motion.button>
                         );
                       })}
                     </div>
@@ -249,37 +251,41 @@ export function ProductDetails({ product }: { product: Product }) {
               Quantity:
             </span>
             <div className="flex items-center border border-neutral-200 rounded-xl bg-white shadow-2xs">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.85 }}
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 disabled={quantity <= 1 || !isAvailable}
-                className="p-2.5 text-neutral-500 hover:text-black disabled:opacity-30 transition-colors"
+                className="p-2.5 text-neutral-500 hover:text-black disabled:opacity-30 transition-colors cursor-pointer"
                 aria-label="Decrease quantity"
               >
                 <Minus className="w-3.5 h-3.5" />
-              </button>
+              </motion.button>
               <span className="w-10 text-center text-xs font-mono font-bold text-neutral-900">
                 {quantity}
               </span>
-              <button
+              <motion.button
+                whileTap={{ scale: 0.85 }}
                 type="button"
                 onClick={() => setQuantity((q) => q + 1)}
                 disabled={!isAvailable}
-                className="p-2.5 text-neutral-500 hover:text-black disabled:opacity-30 transition-colors"
+                className="p-2.5 text-neutral-500 hover:text-black disabled:opacity-30 transition-colors cursor-pointer"
                 aria-label="Increase quantity"
               >
                 <Plus className="w-3.5 h-3.5" />
-              </button>
+              </motion.button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
             {/* Add to Bag */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.015 }}
+              whileTap={{ scale: 0.98 }}
               type="button"
               onClick={handleAddToCart}
               disabled={!isAvailable || isAdding || isMutating}
-              className="w-full py-4 px-6 bg-white text-black border-2 border-black rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-50 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:border-neutral-300 disabled:hover:bg-white active:scale-[0.99] shadow-xs"
+              className="w-full py-4 px-6 bg-white text-black border-2 border-black rounded-full text-xs font-bold uppercase tracking-widest hover:bg-neutral-50 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:border-neutral-300 disabled:hover:bg-white shadow-xs cursor-pointer"
             >
               {isAdding ? (
                 <>
@@ -297,14 +303,16 @@ export function ProductDetails({ product }: { product: Product }) {
                   <span>{isAvailable ? "Add to Bag" : "Sold Out"}</span>
                 </>
               )}
-            </button>
+            </motion.button>
 
             {/* Buy Now */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.015 }}
+              whileTap={{ scale: 0.98 }}
               type="button"
               onClick={handleBuyNow}
               disabled={!isAvailable || isBuyingNow}
-              className="w-full py-4 px-6 bg-[#111111] text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99] shadow-xl"
+              className="w-full py-4 px-6 bg-[#111111] text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-xl cursor-pointer"
             >
               {isBuyingNow ? (
                 <>
@@ -317,7 +325,7 @@ export function ProductDetails({ product }: { product: Product }) {
                   <span>Instant Purchase</span>
                 </>
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -337,14 +345,14 @@ export function ProductDetails({ product }: { product: Product }) {
           </div>
         </div>
 
-        {/* Accordions */}
+        {/* Accordions with Smooth Height Transitions */}
         <div className="divide-y divide-neutral-100">
           {/* Description */}
           <div className="py-3.5">
             <button
               type="button"
               onClick={() => toggleSection("description")}
-              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-widest text-neutral-900 py-1"
+              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-widest text-neutral-900 py-1 cursor-pointer"
             >
               <span>Silhouettes &amp; Craftsmanship</span>
               {openSection === "description" ? (
@@ -353,18 +361,28 @@ export function ProductDetails({ product }: { product: Product }) {
                 <ChevronDown className="w-4 h-4 text-neutral-500" />
               )}
             </button>
-            {openSection === "description" && (
-              <div className="mt-3 text-xs sm:text-sm text-neutral-600 leading-relaxed space-y-2">
-                {product.descriptionHtml ? (
-                  <div
-                    dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
-                    className="prose prose-sm max-w-none text-neutral-600"
-                  />
-                ) : (
-                  <p>{product.description || "Specifications detailed by manufacturer."}</p>
-                )}
-              </div>
-            )}
+            <AnimatePresence>
+              {openSection === "description" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-3 text-xs sm:text-sm text-neutral-600 leading-relaxed space-y-2">
+                    {product.descriptionHtml ? (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+                        className="prose prose-sm max-w-none text-neutral-600"
+                      />
+                    ) : (
+                      <p>{product.description || "Specifications detailed by manufacturer."}</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Delivery & Shipping */}
@@ -372,7 +390,7 @@ export function ProductDetails({ product }: { product: Product }) {
             <button
               type="button"
               onClick={() => toggleSection("shipping")}
-              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-widest text-neutral-900 py-1"
+              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-widest text-neutral-900 py-1 cursor-pointer"
             >
               <span>Fulfillment &amp; Delivery</span>
               {openSection === "shipping" ? (
@@ -381,16 +399,26 @@ export function ProductDetails({ product }: { product: Product }) {
                 <ChevronDown className="w-4 h-4 text-neutral-500" />
               )}
             </button>
-            {openSection === "shipping" && (
-              <div className="mt-3 text-xs text-neutral-600 leading-relaxed space-y-2 font-light">
-                <p>
-                  <strong>Metropolitan Dhaka:</strong> Handed over to courier within 24 hours. Expected arrival 2–3 business days.
-                </p>
-                <p>
-                  <strong>All 64 Districts:</strong> Tracked regional delivery within 3–5 business days. Free for orders totaling ৳2,500+.
-                </p>
-              </div>
-            )}
+            <AnimatePresence>
+              {openSection === "shipping" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-3 text-xs text-neutral-600 leading-relaxed space-y-2 font-light">
+                    <p>
+                      <strong>Metropolitan Dhaka:</strong> Handed over to courier within 24 hours. Expected arrival 2–3 business days.
+                    </p>
+                    <p>
+                      <strong>All 64 Districts:</strong> Tracked regional delivery within 3–5 business days. Free for orders totaling ৳2,500+.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Returns & Exchange */}
@@ -398,7 +426,7 @@ export function ProductDetails({ product }: { product: Product }) {
             <button
               type="button"
               onClick={() => toggleSection("returns")}
-              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-widest text-neutral-900 py-1"
+              className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-widest text-neutral-900 py-1 cursor-pointer"
             >
               <span>Exchange Concierge</span>
               {openSection === "returns" ? (
@@ -407,13 +435,23 @@ export function ProductDetails({ product }: { product: Product }) {
                 <ChevronDown className="w-4 h-4 text-neutral-500" />
               )}
             </button>
-            {openSection === "returns" && (
-              <div className="mt-3 text-xs text-neutral-600 leading-relaxed space-y-2 font-light">
-                <p>
-                  We offer a guaranteed 7-day size exchange window. Items must be unworn outdoors with original boxing and brand tags intact.
-                </p>
-              </div>
-            )}
+            <AnimatePresence>
+              {openSection === "returns" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-3 text-xs text-neutral-600 leading-relaxed space-y-2 font-light">
+                    <p>
+                      We offer a guaranteed 7-day size exchange window. Items must be unworn outdoors with original boxing and brand tags intact.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X, Loader2, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { formatPrice } from "@/lib/utils";
 
 type SearchResultItem = {
@@ -106,156 +107,176 @@ export function SearchModal({
     router.push(`/search?q=${encodeURIComponent(sugQuery)}`);
   };
 
-  if (!isOpen) return null;
-
   const isQueryEmpty = !query.trim();
   const displayResults = isQueryEmpty ? [] : results;
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-        onClick={handleClose}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
+            onClick={handleClose}
+          />
 
-      <div className="fixed top-0 inset-x-0 bg-white shadow-2xl border-b border-gray-100 max-h-[85vh] flex flex-col z-10 animate-in slide-in-from-top duration-200">
-        <div className="max-w-4xl mx-auto w-full p-4 sm:p-6">
-          <form onSubmit={handleSubmit} className="relative flex items-center">
-            <Search className="w-5 h-5 text-gray-400 absolute left-4" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                if (!e.target.value.trim()) {
-                  setResults([]);
-                  setIsLoading(false);
-                }
-              }}
-              placeholder="Search by shoe type, brand, or color (e.g. 'Power', 'Hush Puppies', 'Sandals')..."
-              className="w-full pl-12 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-full text-base focus:outline-none focus:border-black focus:bg-white transition-all"
-            />
-            {query ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  setResults([]);
-                }}
-                className="absolute right-4 text-gray-400 hover:text-black p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleClose}
-                className="absolute right-4 text-gray-400 hover:text-black text-xs uppercase font-medium tracking-wider"
-              >
-                ESC
-              </button>
-            )}
-          </form>
-
-          {/* If query is empty, show curated suggestions */}
-          {isQueryEmpty && (
-            <div className="mt-5 pt-4 border-t border-gray-100">
-              <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 mb-3">
-                Trending Brands &amp; Silhouettes
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {curatedSuggestions.map((sug) => (
-                  <button
-                    key={sug.label}
+          <motion.div
+            initial={{ opacity: 0, y: -24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ type: "spring", damping: 28, stiffness: 320 }}
+            className="fixed top-0 inset-x-0 bg-white shadow-2xl border-b border-neutral-200 max-h-[85vh] flex flex-col z-10"
+          >
+            <div className="max-w-4xl mx-auto w-full p-4 sm:p-6">
+              <form onSubmit={handleSubmit} className="relative flex items-center">
+                <Search className="w-5 h-5 text-neutral-400 absolute left-4" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    if (!e.target.value.trim()) {
+                      setResults([]);
+                      setIsLoading(false);
+                    }
+                  }}
+                  placeholder="Search by shoe type, brand, or color (e.g. 'Power', 'Hush Puppies', 'Sandals')..."
+                  className="w-full pl-12 pr-12 py-3.5 bg-neutral-100 border border-neutral-200 rounded-full text-base focus:outline-none focus:border-black focus:bg-white transition-all font-sans"
+                />
+                {query ? (
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
                     type="button"
-                    onClick={() => handleSuggestionClick(sug.query)}
-                    className="px-3.5 py-1.5 rounded-full text-xs bg-gray-100 hover:bg-black hover:text-white text-gray-800 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setQuery("");
+                      setResults([]);
+                    }}
+                    className="absolute right-4 text-neutral-400 hover:text-black p-1 cursor-pointer"
                   >
-                    {sug.label}
+                    <X className="w-4 h-4" />
+                  </motion.button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="absolute right-4 text-neutral-400 hover:text-black text-xs uppercase font-medium tracking-wider cursor-pointer"
+                  >
+                    ESC
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
+              </form>
 
-          {/* Results section */}
-          <div className="mt-4 overflow-y-auto max-h-[50vh] divide-y divide-gray-100">
-            {isLoading && (
-              <div className="py-12 flex flex-col items-center justify-center text-gray-400">
-                <Loader2 className="w-6 h-6 animate-spin mb-2" />
-                <span className="text-sm">Searching store catalog...</span>
-              </div>
-            )}
-
-            {!isLoading && displayResults.length > 0 && (
-              <div className="py-2">
-                <p className="text-xs uppercase font-semibold text-gray-400 tracking-wider mb-3">
-                  Products ({displayResults.length})
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {displayResults.slice(0, 6).map((item) => (
-                    <Link
-                      key={item.id}
-                      href={`/products/${item.handle}`}
-                      onClick={handleClose}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
-                    >
-                      <div className="relative w-14 h-14 bg-gray-100 rounded-md overflow-hidden shrink-0">
-                        {item.featuredImage ? (
-                          <Image
-                            src={item.featuredImage.url}
-                            alt={item.featuredImage.altText || item.title}
-                            fill
-                            className="object-cover"
-                            sizes="56px"
-                          />
-                        ) : null}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-gray-900 group-hover:text-black truncate">
-                          {item.title}
-                        </h4>
-                        <p className="text-xs font-semibold text-gray-700 mt-0.5">
-                          {formatPrice(
-                            item.priceRange.minVariantPrice.amount,
-                            item.priceRange.minVariantPrice.currencyCode
-                          )}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+              {/* If query is empty, show curated suggestions */}
+              {isQueryEmpty && (
+                <div className="mt-5 pt-4 border-t border-neutral-100">
+                  <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 mb-3 font-mono">
+                    Trending Brands &amp; Silhouettes
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {curatedSuggestions.map((sug) => (
+                      <motion.button
+                        key={sug.label}
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={() => handleSuggestionClick(sug.query)}
+                        className="px-3.5 py-1.5 rounded-full text-xs bg-neutral-100 hover:bg-black hover:text-white text-neutral-800 transition-colors cursor-pointer"
+                      >
+                        {sug.label}
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
+              )}
 
-                {displayResults.length > 6 && (
-                  <div className="mt-4 text-center">
-                    <button
-                      onClick={handleSubmit}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-black hover:underline"
-                    >
-                      View all {displayResults.length} results
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
+              {/* Results section */}
+              <div className="mt-4 overflow-y-auto max-h-[50vh] divide-y divide-neutral-100">
+                {isLoading && (
+                  <div className="py-12 flex flex-col items-center justify-center text-neutral-400">
+                    <Loader2 className="w-6 h-6 animate-spin mb-2" />
+                    <span className="text-xs uppercase tracking-widest font-mono">Searching catalog...</span>
+                  </div>
+                )}
+
+                {!isLoading && displayResults.length > 0 && (
+                  <div className="py-2">
+                    <p className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3 font-mono">
+                      Products ({displayResults.length})
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {displayResults.slice(0, 6).map((item, idx) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                        >
+                          <Link
+                            href={`/products/${item.handle}`}
+                            onClick={handleClose}
+                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-50 transition-colors group border border-transparent hover:border-neutral-200"
+                          >
+                            <div className="relative w-14 h-14 bg-neutral-100 rounded-lg overflow-hidden shrink-0">
+                              {item.featuredImage ? (
+                                <Image
+                                  src={item.featuredImage.url}
+                                  alt={item.featuredImage.altText || item.title}
+                                  fill
+                                  className="object-cover"
+                                  sizes="56px"
+                                />
+                              ) : null}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs sm:text-sm font-bold text-neutral-900 group-hover:text-black truncate uppercase tracking-tight">
+                                {item.title}
+                              </h4>
+                              <p className="text-xs font-black text-neutral-900 mt-0.5 font-mono">
+                                {formatPrice(
+                                  item.priceRange.minVariantPrice.amount,
+                                  item.priceRange.minVariantPrice.currencyCode
+                                )}
+                              </p>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {displayResults.length > 6 && (
+                      <div className="mt-4 text-center">
+                        <button
+                          onClick={handleSubmit}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline cursor-pointer"
+                        >
+                          <span>View all {displayResults.length} results</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!isLoading && !isQueryEmpty && displayResults.length === 0 && (
+                  <div className="py-12 text-center text-neutral-500">
+                    <p className="text-base font-bold text-neutral-900 uppercase">
+                      No silhouettes found for &ldquo;{query}&rdquo;
+                    </p>
+                    <p className="text-xs text-neutral-400 mt-1 font-light">
+                      Try searching &ldquo;Power&rdquo;, &ldquo;Sandals&rdquo;, or &ldquo;Bubblegummers&rdquo;.
+                    </p>
                   </div>
                 )}
               </div>
-            )}
-
-            {!isLoading && !isQueryEmpty && displayResults.length === 0 && (
-              <div className="py-12 text-center text-gray-500">
-                <p className="text-base font-medium text-gray-900">
-                  No products found for &ldquo;{query}&rdquo;
-                </p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Try checking your spelling or using more general terms like
-                  &ldquo;Power&rdquo;, &ldquo;Sandals&rdquo;, or &ldquo;Bubblegummers&rdquo;.
-                </p>
-              </div>
-            )}
-          </div>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
