@@ -1,4 +1,5 @@
 import { CartView } from "@/components/cart/CartView";
+import { PageTransition } from "@/components/motion/PageTransition";
 
 export const instant = false;
 
@@ -8,5 +9,9 @@ export const metadata = {
 };
 
 export default function CartPage() {
-  return <CartView />;
+  return (
+    <PageTransition>
+      <CartView />
+    </PageTransition>
+  );
 }

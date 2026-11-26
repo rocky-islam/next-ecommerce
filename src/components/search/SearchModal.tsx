@@ -7,6 +7,17 @@ import Link from "next/link";
 import { Search, X, Loader2, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { formatPrice } from "@/lib/utils";
+import { EASE } from "@/lib/motion";
+import { useOverlay } from "@/hooks/use-overlay";
+
+const chipList = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.035, delayChildren: 0.2 } },
+};
+const chipItem = {
+  hidden: { opacity: 0, y: 10, scale: 0.95 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: EASE.out } },
+};
 
 type SearchResultItem = {
   id: string;
@@ -94,6 +105,9 @@ export function SearchModal({
     onClose();
   };
 
+  // Escape closes, page scroll locked while open
+  useOverlay(isOpen, handleClose);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
@@ -113,7 +127,7 @@ export function SearchModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Search catalog">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -125,14 +139,20 @@ export function SearchModal({
           />
 
           <motion.div
-            initial={{ opacity: 0, y: -24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ type: "spring", damping: 28, stiffness: 320 }}
+            initial={{ clipPath: "inset(0 0 100% 0)", y: -12 }}
+            animate={{ clipPath: "inset(0 0 0% 0)", y: 0 }}
+            exit={{ clipPath: "inset(0 0 100% 0)", y: -8, transition: { duration: 0.35, ease: EASE.inOut } }}
+            transition={{ duration: 0.6, ease: EASE.out }}
             className="fixed top-0 inset-x-0 bg-white shadow-2xl border-b border-neutral-200 max-h-[85vh] flex flex-col z-10"
           >
             <div className="max-w-4xl mx-auto w-full p-4 sm:p-6">
-              <form onSubmit={handleSubmit} className="relative flex items-center">
+              <motion.form
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.12, ease: EASE.out }}
+                onSubmit={handleSubmit}
+                className="relative flex items-center"
+              >
                 <Search className="w-5 h-5 text-neutral-400 absolute left-4" />
                 <input
                   ref={inputRef}
@@ -146,10 +166,14 @@ export function SearchModal({
                     }
                   }}
                   placeholder="Search by shoe type, brand, or color (e.g. 'Power', 'Hush Puppies', 'Sandals')..."
-                  className="w-full pl-12 pr-12 py-3.5 bg-neutral-100 border border-neutral-200 rounded-full text-base focus:outline-none focus:border-black focus:bg-white transition-all font-sans"
+                  aria-label="Search products"
+                  className="w-full pl-12 pr-12 py-3.5 bg-neutral-100 border border-neutral-200 rounded-full text-base focus:outline-none focus:border-black focus:bg-white focus:shadow-[0_0_0_4px_rgba(0,0,0,0.05)] transition-[background-color,border-color,box-shadow] duration-300 font-sans"
                 />
                 {query ? (
                   <motion.button
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    aria-label="Clear search"
                     whileTap={{ scale: 0.85 }}
                     type="button"
                     onClick={() => {
@@ -169,18 +193,24 @@ export function SearchModal({
                     ESC
                   </button>
                 )}
-              </form>
+              </motion.form>
 
               {/* If query is empty, show curated suggestions */}
               {isQueryEmpty && (
-                <div className="mt-5 pt-4 border-t border-neutral-100">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.15 }}
+                  className="mt-5 pt-4 border-t border-neutral-100"
+                >
                   <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 mb-3 font-mono">
                     Trending Brands &amp; Silhouettes
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <motion.div variants={chipList} initial="hidden" animate="show" className="flex flex-wrap gap-2">
                     {curatedSuggestions.map((sug) => (
                       <motion.button
                         key={sug.label}
+                        variants={chipItem}
                         whileHover={{ scale: 1.04 }}
                         whileTap={{ scale: 0.95 }}
                         type="button"
@@ -190,17 +220,22 @@ export function SearchModal({
                         {sug.label}
                       </motion.button>
                     ))}
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
 
               {/* Results section */}
               <div className="mt-4 overflow-y-auto max-h-[50vh] divide-y divide-neutral-100">
                 {isLoading && (
-                  <div className="py-12 flex flex-col items-center justify-center text-neutral-400">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    role="status"
+                    className="py-12 flex flex-col items-center justify-center text-neutral-400"
+                  >
                     <Loader2 className="w-6 h-6 animate-spin mb-2" />
                     <span className="text-xs uppercase tracking-widest font-mono">Searching catalog...</span>
-                  </div>
+                  </motion.div>
                 )}
 
                 {!isLoading && displayResults.length > 0 && (
@@ -212,9 +247,9 @@ export function SearchModal({
                       {displayResults.slice(0, 6).map((item, idx) => (
                         <motion.div
                           key={item.id}
-                          initial={{ opacity: 0, y: 10 }}
+                          initial={{ opacity: 0, y: 14 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
+                          transition={{ delay: idx * 0.05, duration: 0.45, ease: EASE.out }}
                         >
                           <Link
                             href={`/products/${item.handle}`}
@@ -227,12 +262,12 @@ export function SearchModal({
                                   src={item.featuredImage.url}
                                   alt={item.featuredImage.altText || item.title}
                                   fill
-                                  className="object-cover"
+                                  className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
                                   sizes="56px"
                                 />
                               ) : null}
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-1">
                               <h4 className="text-xs sm:text-sm font-bold text-neutral-900 group-hover:text-black truncate uppercase tracking-tight">
                                 {item.title}
                               </h4>
@@ -252,10 +287,10 @@ export function SearchModal({
                       <div className="mt-4 text-center">
                         <button
                           onClick={handleSubmit}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline cursor-pointer"
+                          className="group inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black cursor-pointer"
                         >
-                          <span>View all {displayResults.length} results</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <span className="link-underline">View all {displayResults.length} results</span>
+                          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-500 group-hover:translate-x-1" />
                         </button>
                       </div>
                     )}
@@ -263,14 +298,19 @@ export function SearchModal({
                 )}
 
                 {!isLoading && !isQueryEmpty && displayResults.length === 0 && (
-                  <div className="py-12 text-center text-neutral-500">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: EASE.out }}
+                    className="py-12 text-center text-neutral-500"
+                  >
                     <p className="text-base font-bold text-neutral-900 uppercase">
                       No silhouettes found for &ldquo;{query}&rdquo;
                     </p>
                     <p className="text-xs text-neutral-400 mt-1 font-light">
                       Try searching &ldquo;Power&rdquo;, &ldquo;Sandals&rdquo;, or &ldquo;Bubblegummers&rdquo;.
                     </p>
-                  </div>
+                  </motion.div>
                 )}
               </div>
             </div>

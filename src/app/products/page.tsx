@@ -6,6 +6,11 @@ import { ProductSortKey } from "@/lib/shopify/types";
 import { ProductFilters } from "@/components/product/ProductFilters";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductGridSkeleton } from "@/components/product/ProductSkeleton";
+import { PageTransition } from "@/components/motion/PageTransition";
+import { SplitText } from "@/components/motion/SplitText";
+import { Reveal } from "@/components/motion/Reveal";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { RollText } from "@/components/motion/RollText";
 
 export const metadata = {
   title: "Full Directory | KINETIC // STUDIO",
@@ -85,12 +90,20 @@ async function ProductsContent({
   return (
     <div>
       <div className="mb-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 mb-2 font-mono">
-          DIRECTORY // CATALOG
-        </p>
-        <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-neutral-900 font-sans uppercase">
-          {activeTitle}
-        </h1>
+        <Reveal trigger="mount" y={10}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 mb-2 font-mono">
+            DIRECTORY // CATALOG
+          </p>
+        </Reveal>
+        {/* Keyed so the headline re-reveals whenever the filter changes */}
+        <SplitText
+          key={activeTitle}
+          as="h1"
+          trigger="mount"
+          delay={80}
+          text={activeTitle}
+          className="text-3xl sm:text-5xl font-black tracking-tight text-neutral-900 font-sans uppercase"
+        />
       </div>
 
       <ProductFilters
@@ -106,7 +119,8 @@ async function ProductsContent({
 
       {/* Pagination */}
       {pageInfo.hasNextPage && pageInfo.endCursor && (
-        <div className="mt-16 flex items-center justify-center gap-4 pt-10 border-t border-neutral-200/70">
+        <Reveal className="mt-16 flex items-center justify-center gap-4 pt-10 border-t border-neutral-200/70">
+          <Magnetic>
           <Link
             href={`/products?${new URLSearchParams({
               ...(currentQuery ? { query: currentQuery } : {}),
@@ -116,12 +130,13 @@ async function ProductsContent({
               sort: currentSort,
               after: pageInfo.endCursor,
             }).toString()}`}
-            className="px-8 py-4 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-neutral-800 transition-all shadow-md inline-flex items-center gap-2 active:scale-[0.98]"
+            className="group btn-shine px-8 py-4 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-neutral-800 transition-colors shadow-md inline-flex items-center gap-2"
           >
-            <span>Load Next Page</span>
-            <ArrowRight className="w-4 h-4" />
+            <RollText>Load Next Page</RollText>
+            <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1" />
           </Link>
-        </div>
+          </Magnetic>
+        </Reveal>
       )}
     </div>
   );
@@ -133,10 +148,12 @@ export default function ProductsPage({
   searchParams: SearchParams;
 }) {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-      <Suspense fallback={<ProductGridSkeleton count={12} />}>
-        <ProductsContent searchParams={searchParams} />
-      </Suspense>
-    </div>
+    <PageTransition>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+        <Suspense fallback={<ProductGridSkeleton count={12} />}>
+          <ProductsContent searchParams={searchParams} />
+        </Suspense>
+      </div>
+    </PageTransition>
   );
 }

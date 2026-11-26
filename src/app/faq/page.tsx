@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { PageTransition } from "@/components/motion/PageTransition";
+import { SplitText } from "@/components/motion/SplitText";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
+import { AccordionItem } from "@/components/motion/Accordion";
 
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -39,66 +41,50 @@ export default function FAQPage() {
   };
 
   return (
+    <PageTransition>
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-        className="text-center mb-16"
-      >
-        <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 font-mono">
+      <StaggerGroup trigger="mount" step={120} className="text-center mb-16">
+        <span className="block text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 font-mono">
           CLIENT CONCIERGE
         </span>
-        <h1 className="mt-2 text-3xl sm:text-5xl font-black text-neutral-900 font-sans tracking-tight uppercase">
-          Frequently Asked Questions
-        </h1>
+        <SplitText
+          as="h1"
+          trigger="mount"
+          delay={100}
+          text="Frequently Asked Questions"
+          className="mt-2 text-3xl sm:text-5xl font-black text-neutral-900 font-sans tracking-tight uppercase"
+        />
         <p className="mt-4 text-xs sm:text-sm text-neutral-500 max-w-xl mx-auto leading-relaxed font-light">
           Everything you need to know regarding authentication, 64-district delivery timelines, and our 7-day exchange protocol.
         </p>
-      </motion.div>
+      </StaggerGroup>
 
-      <div className="space-y-4">
+      <StaggerGroup trigger="mount" delay={350} step={70} className="space-y-4">
         {faqs.map((faq, index) => {
           const isOpen = openIndex === index;
           return (
-            <motion.div
+            <AccordionItem
               key={faq.q}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.06 }}
-              className="rounded-2xl bg-[#FBFBFA] border border-neutral-200/80 overflow-hidden"
+              title={faq.q}
+              isOpen={isOpen}
+              onToggle={() => toggleFAQ(index)}
+              className={`rounded-2xl border overflow-hidden transition-[background-color,border-color,box-shadow] duration-500 ${
+                isOpen
+                  ? "bg-white border-neutral-300 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.35)]"
+                  : "bg-[#FBFBFA] border-neutral-200/80 hover:border-neutral-300"
+              }`}
+              buttonClassName="p-6 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-neutral-900"
+              iconClassName={`w-7 h-7 rounded-full transition-colors duration-500 ${
+                isOpen ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-400 group-hover:text-neutral-900"
+              }`}
+              panelClassName="px-6 pb-6 pt-1 text-xs sm:text-sm text-neutral-600 leading-relaxed whitespace-pre-line border-t border-neutral-100/60"
             >
-              <button
-                type="button"
-                onClick={() => toggleFAQ(index)}
-                className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-neutral-900 cursor-pointer"
-              >
-                <span>{faq.q}</span>
-                <motion.div
-                  animate={{ rotate: isOpen ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="shrink-0 text-neutral-400"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </motion.div>
-              </button>
-              <AnimatePresence>
-                {isOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="overflow-hidden px-6 pb-6 pt-1 text-xs sm:text-sm text-neutral-600 leading-relaxed whitespace-pre-line border-t border-neutral-100/60"
-                  >
-                    {faq.a}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+              {faq.a}
+            </AccordionItem>
           );
         })}
-      </div>
+      </StaggerGroup>
     </div>
+    </PageTransition>
   );
 }

@@ -1,9 +1,26 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Filter, SlidersHorizontal, X } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, LayoutGroup } from "motion/react";
+import { EASE, SPRING } from "@/lib/motion";
+import { useOverlay } from "@/hooks/use-overlay";
+
+const drawerSections = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
+};
+const drawerSection = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE.out } },
+};
+const chipMotion = {
+  initial: { opacity: 0, scale: 0.8 },
+  animate: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 0.8 },
+  transition: SPRING.snappy,
+};
 
 type ProductFiltersProps = {
   totalCount?: number;
@@ -25,6 +42,10 @@ export function ProductFilters({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  // Route updates run in a transition so we can show a pending state
+  const [isPending, startTransition] = useTransition();
+  const navigate = (url: string) => startTransition(() => router.push(url));
+  useOverlay(isMobileFiltersOpen, () => setIsMobileFiltersOpen(false));
 
   type QuickPill = {
     label: string;
@@ -100,7 +121,7 @@ export function ProductFilters({
       params.delete(key);
     }
     params.delete("after");
-    router.push(`/products?${params.toString()}`);
+    navigate(`/products?${params.toString()}`);
   };
 
   const applyPill = (pillParams: Record<string, string | undefined>) => {
@@ -113,11 +134,11 @@ export function ProductFilters({
         params.set(k, v);
       }
     });
-    router.push(`/products?${params.toString()}`);
+    navigate(`/products?${params.toString()}`);
   };
 
   const clearAllFilters = () => {
-    router.push("/products");
+    navigate("/products");
   };
 
   const hasActiveFilters = Boolean(
@@ -129,8 +150,9 @@ export function ProductFilters({
   );
 
   return (
-    <div className="space-y-5 mb-10">
-      {/* Category Horizontal Filter Pills */}
+    <div className="space-y-5 mb-10" aria-busy={isPending}>
+      {/* Category Horizontal Filter Pills — active background glides */}
+      <LayoutGroup id="filter-pills">
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         {quickPills.map((pill) => {
           const isAll =
@@ -152,92 +174,145 @@ export function ProductFilters({
               type="button"
               whileTap={{ scale: 0.94 }}
               onClick={() => applyPill(pill.params)}
-              className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              className={`relative isolate px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-300 cursor-pointer ${
                 isActive
-                  ? "bg-black text-white shadow-xs"
+                  ? "text-white"
                   : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
               }`}
             >
+              {isActive && (
+                <motion.span
+                  layoutId="filter-pill-active"
+                  transition={SPRING.glide}
+                  className="absolute inset-0 -z-10 rounded-full bg-black shadow-xs"
+                />
+              )}
               {pill.label}
             </motion.button>
           );
         })}
       </div>
+      </LayoutGroup>
 
       {/* Control Bar: Product Count, Active Chips & Sort Select */}
-      <div className="flex items-center justify-between pt-4 border-t border-neutral-200/80 flex-wrap gap-4">
+      <div className="relative flex items-center justify-between pt-4 border-t border-neutral-200/80 flex-wrap gap-4">
+        {/* Pending navigation indicator */}
+        <AnimatePresence>
+          {isPending && (
+            <motion.div
+              key="pending"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute -top-px inset-x-0 h-px overflow-hidden"
+              aria-hidden="true"
+            >
+              <div className="h-full w-1/3 bg-black animate-indeterminate" />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="flex items-center gap-2 flex-wrap">
           {totalCount !== undefined && (
-            <p className="text-xs font-mono text-neutral-500 uppercase tracking-wider mr-2">
-              Showing <span className="font-bold text-neutral-900">{totalCount}</span> styles
+            <p className="text-xs font-mono text-neutral-500 uppercase tracking-wider mr-2 flex items-center gap-1">
+              Showing{" "}
+              <span className={`font-bold text-neutral-900 transition-opacity ${isPending ? "opacity-40" : ""}`}>
+                {totalCount}
+              </span>{" "}
+              styles
             </p>
           )}
 
+          <AnimatePresence mode="popLayout" initial={false}>
+
           {/* Active Filter Badges */}
           {currentVendor && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium">
+            <motion.span
+              key="chip-vendor"
+              layout
+              {...chipMotion}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium"
+            >
               Brand: {currentVendor}
               <button
                 type="button"
                 onClick={() => setSingleParam("vendor", "")}
-                className="hover:text-red-400 p-0.5"
+                className="hover:text-red-400 hover:rotate-90 transition-transform duration-300 p-0.5 cursor-pointer"
                 aria-label="Remove brand filter"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </motion.span>
           )}
 
           {currentType && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium">
+            <motion.span
+              key="chip-type"
+              layout
+              {...chipMotion}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium"
+            >
               Type: {currentType}
               <button
                 type="button"
                 onClick={() => setSingleParam("type", "")}
-                className="hover:text-red-400 p-0.5"
+                className="hover:text-red-400 hover:rotate-90 transition-transform duration-300 p-0.5 cursor-pointer"
                 aria-label="Remove type filter"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </motion.span>
           )}
 
           {currentTag && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium">
+            <motion.span
+              key="chip-tag"
+              layout
+              {...chipMotion}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium"
+            >
               Tag: {currentTag}
               <button
                 type="button"
                 onClick={() => setSingleParam("tag", "")}
-                className="hover:text-red-400 p-0.5"
+                className="hover:text-red-400 hover:rotate-90 transition-transform duration-300 p-0.5 cursor-pointer"
                 aria-label="Remove tag filter"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </motion.span>
           )}
 
           {currentQuery && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium">
+            <motion.span
+              key="chip-query"
+              layout
+              {...chipMotion}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-neutral-900 text-white font-medium"
+            >
               Search: {currentQuery}
               <button
                 type="button"
                 onClick={() => setSingleParam("query", "")}
-                className="hover:text-red-400 p-0.5"
+                className="hover:text-red-400 hover:rotate-90 transition-transform duration-300 p-0.5 cursor-pointer"
                 aria-label="Remove query filter"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </motion.span>
           )}
 
           {hasActiveFilters && (
-            <button
+            <motion.button
+              key="clear-all"
+              layout
+              {...chipMotion}
               onClick={clearAllFilters}
-              className="text-xs font-semibold text-red-600 hover:text-red-700 ml-2 cursor-pointer transition-colors"
+              className="link-underline text-xs font-semibold text-red-600 hover:text-red-700 ml-2 cursor-pointer"
             >
               Clear All
-            </button>
+            </motion.button>
           )}
+          </AnimatePresence>
         </div>
 
         <div className="flex items-center gap-3 ml-auto">
@@ -247,7 +322,7 @@ export function ProductFilters({
             <select
               value={currentSort}
               onChange={(e) => setSingleParam("sort", e.target.value)}
-              className="bg-white border border-neutral-300 rounded-lg text-xs font-medium text-neutral-800 py-2 px-3 focus:outline-none focus:border-black transition-colors"
+              className="bg-white border border-neutral-300 rounded-lg text-xs font-medium text-neutral-800 py-2 px-3 hover:border-neutral-500 focus:outline-none focus:border-black focus:shadow-[0_0_0_3px_rgba(0,0,0,0.06)] transition-[border-color,box-shadow] cursor-pointer"
               aria-label="Sort products by"
             >
               {sortOptions.map((opt) => (
@@ -262,10 +337,10 @@ export function ProductFilters({
           <button
             type="button"
             onClick={() => setIsMobileFiltersOpen(true)}
-            className="p-2 border border-neutral-300 rounded-lg text-neutral-700 hover:text-black flex items-center gap-1.5 text-xs font-semibold"
+            className="group p-2 border border-neutral-300 rounded-lg text-neutral-700 hover:text-black hover:border-black transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
             aria-label="Filter products"
           >
-            <Filter className="w-3.5 h-3.5" />
+            <Filter className="w-3.5 h-3.5 transition-transform duration-500 group-hover:rotate-180" />
             <span className="hidden sm:inline">Refine</span>
           </button>
         </div>
@@ -274,7 +349,7 @@ export function ProductFilters({
       {/* Filter Drawer / Modal */}
       <AnimatePresence>
         {isMobileFiltersOpen && (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Refine catalog">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -286,8 +361,8 @@ export function ProductFilters({
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 280 }}
+              exit={{ x: "100%", transition: { duration: 0.35, ease: EASE.inOut } }}
+              transition={SPRING.drawer}
               className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl flex flex-col z-10 p-6"
             >
               <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
@@ -304,9 +379,14 @@ export function ProductFilters({
                 </motion.button>
               </div>
 
-              <div className="py-6 space-y-6 flex-1 overflow-y-auto">
+              <motion.div
+                variants={drawerSections}
+                initial="hidden"
+                animate="show"
+                className="py-6 space-y-6 flex-1 overflow-y-auto"
+              >
                 {/* Brand Section */}
-                <div>
+                <motion.div variants={drawerSection}>
                   <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
                     Brand / Label
                   </h4>
@@ -320,7 +400,7 @@ export function ProductFilters({
                             setSingleParam("vendor", isSelected ? "" : b.value);
                             setIsMobileFiltersOpen(false);
                           }}
-                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-[background-color,border-color,color,transform] duration-300 active:scale-95 cursor-pointer ${
                             isSelected
                               ? "bg-black text-white border-black"
                               : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
@@ -331,10 +411,10 @@ export function ProductFilters({
                       );
                     })}
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Product Type Section */}
-                <div>
+                <motion.div variants={drawerSection}>
                   <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
                     Product Type
                   </h4>
@@ -348,7 +428,7 @@ export function ProductFilters({
                             setSingleParam("type", isSelected ? "" : t.value);
                             setIsMobileFiltersOpen(false);
                           }}
-                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-[background-color,border-color,color,transform] duration-300 active:scale-95 cursor-pointer ${
                             isSelected
                               ? "bg-black text-white border-black"
                               : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
@@ -359,10 +439,10 @@ export function ProductFilters({
                       );
                     })}
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Price Band Section */}
-                <div>
+                <motion.div variants={drawerSection}>
                   <h4 className="text-[11px] uppercase font-bold text-neutral-400 tracking-wider mb-3">
                     Price Tier (BDT)
                   </h4>
@@ -376,7 +456,7 @@ export function ProductFilters({
                             setSingleParam("tag", isSelected ? "" : p.tag);
                             setIsMobileFiltersOpen(false);
                           }}
-                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-[background-color,border-color,color,transform] duration-300 active:scale-95 cursor-pointer ${
                             isSelected
                               ? "bg-black text-white border-black"
                               : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
@@ -387,8 +467,8 @@ export function ProductFilters({
                       );
                     })}
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               <div className="pt-4 border-t border-neutral-200 flex gap-3">
                 <button

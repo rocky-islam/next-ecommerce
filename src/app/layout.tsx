@@ -6,6 +6,11 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import Script from "next/script";
+import { MotionProvider } from "@/components/motion/MotionProvider";
+import { CustomCursor } from "@/components/motion/CustomCursor";
+import { BackToTop } from "@/components/motion/BackToTop";
+import { IntroCurtain, introScript } from "@/components/motion/IntroCurtain";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,15 +55,33 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // The intro script may set data-intro before hydration
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-white text-[#171717] font-sans selection:bg-neutral-900 selection:text-white">
-        <CartProvider>
-          <AnnouncementBar />
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <CartDrawer />
-        </CartProvider>
+        {/* Without JS, scroll-reveal content must never stay hidden */}
+        <noscript
+          dangerouslySetInnerHTML={{
+            __html: `<style>[data-visible="false"],[data-visible="false"]>*,[data-visible="false"] .split-word,[data-visible="false"]>[data-image-reveal-inner]{opacity:1!important;transform:none!important;clip-path:none!important}</style>`,
+          }}
+        />
+        <Script id="intro-gate" strategy="beforeInteractive">
+          {introScript}
+        </Script>
+        <IntroCurtain />
+        <MotionProvider>
+          <CartProvider>
+            <AnnouncementBar />
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <CartDrawer />
+            <BackToTop />
+            <CustomCursor />
+          </CartProvider>
+        </MotionProvider>
+        {/* Film grain texture */}
+        <div aria-hidden="true" className="grain" />
       </body>
     </html>
   );

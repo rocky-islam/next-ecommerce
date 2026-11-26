@@ -10,6 +10,9 @@ import {
 import { ProductDetails } from "@/components/product/ProductInfo";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductGridSkeleton } from "@/components/product/ProductSkeleton";
+import { PageTransition } from "@/components/motion/PageTransition";
+import { Reveal } from "@/components/motion/Reveal";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 export const instant = false;
 
@@ -49,15 +52,12 @@ async function RelatedProducts({ productId }: { productId: string }) {
 
   return (
     <div className="mt-20 pt-16 border-t border-gray-100">
-      <div className="mb-8">
-        <p className="text-xs uppercase tracking-widest font-bold text-gray-400 mb-1">
-          Complete Your Style
-        </p>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 font-sans tracking-tight">
-          Recommended for You
-        </h2>
-      </div>
-      <ProductGrid products={related.slice(0, 4)} priorityCount={4} />
+      <SectionHeader
+        eyebrow="Complete Your Style"
+        title="Recommended for You"
+        className="mb-8"
+      />
+      <ProductGrid products={related.slice(0, 4)} priorityCount={0} />
     </div>
   );
 }
@@ -95,6 +95,7 @@ export default async function ProductPage({ params }: Props) {
   };
 
   return (
+    <PageTransition>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
       {/* JSON-LD Structured Data */}
       <script
@@ -103,6 +104,7 @@ export default async function ProductPage({ params }: Props) {
       />
 
       {/* Breadcrumbs */}
+      <Reveal trigger="mount" y={8}>
       <nav
         aria-label="Breadcrumbs"
         className="flex items-center space-x-2 text-xs text-gray-500 mb-8 overflow-x-auto no-scrollbar"
@@ -119,6 +121,7 @@ export default async function ProductPage({ params }: Props) {
           {product.title}
         </span>
       </nav>
+      </Reveal>
 
       {/* Product Details Section */}
       <ProductDetails product={product} />
@@ -128,5 +131,6 @@ export default async function ProductPage({ params }: Props) {
         <RelatedProducts productId={product.id} />
       </Suspense>
     </div>
+    </PageTransition>
   );
 }

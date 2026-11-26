@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
+import { EASE } from "@/lib/motion";
+import { RollingValue } from "@/components/motion/RollingValue";
 import { CartLine } from "@/lib/shopify/types";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -12,9 +14,12 @@ import { useState } from "react";
 export function CartItemRow({
   line,
   onClose,
+  index = 0,
 }: {
   line: CartLine;
   onClose?: () => void;
+  /** Position in the list, staggers the entrance. */
+  index?: number;
 }) {
   const { updateItem, removeItem, isMutating } = useCart();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -40,12 +45,31 @@ export function CartItemRow({
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.3 }}
-      className="flex gap-4 py-4 border-b border-gray-100 last:border-b-0"
+      layout="position"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, delay: 0.12 + index * 0.06, ease: EASE.out },
+      }}
+      // Removal: slide out, then collapse height so the list closes up smoothly
+      exit={{
+        opacity: 0,
+        x: 40,
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        transition: {
+          opacity: { duration: 0.2 },
+          x: { duration: 0.3, ease: EASE.in },
+          height: { duration: 0.4, delay: 0.15, ease: EASE.inOut },
+          paddingTop: { duration: 0.4, delay: 0.15, ease: EASE.inOut },
+          paddingBottom: { duration: 0.4, delay: 0.15, ease: EASE.inOut },
+        },
+      }}
+      className={`group flex gap-4 py-4 border-b border-gray-100 last:border-b-0 overflow-hidden transition-opacity ${
+        isUpdating ? "opacity-60" : ""
+      }`}
     >
       {/* Product Image */}
       <div className="relative w-20 h-20 bg-neutral-100 rounded-xl overflow-hidden shrink-0 border border-neutral-200/60">
@@ -59,7 +83,7 @@ export function CartItemRow({
             }
             fill
             sizes="80px"
-            className="object-cover"
+            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
@@ -83,6 +107,7 @@ export function CartItemRow({
               whileTap={{ scale: 0.9 }}
               onClick={handleRemove}
               disabled={isUpdating || isMutating}
+              whileHover={{ rotate: -12 }}
               className="text-neutral-400 hover:text-red-600 transition-colors p-1 -mr-1 cursor-pointer"
               aria-label="Remove item"
             >
@@ -111,11 +136,11 @@ export function CartItemRow({
             >
               <Minus className="w-3 h-3" />
             </motion.button>
-            <span className="px-3 text-xs font-bold text-neutral-900 min-w-6 text-center font-mono">
+            <span className="px-3 text-xs font-bold text-neutral-900 min-w-6 flex justify-center font-mono" aria-live="polite">
               {isUpdating ? (
                 <Loader2 className="w-3 h-3 animate-spin inline-block" />
               ) : (
-                line.quantity
+                <RollingValue value={line.quantity} />
               )}
             </span>
             <motion.button
@@ -130,9 +155,7 @@ export function CartItemRow({
             </motion.button>
           </div>
 
-          <span className="text-xs font-black text-neutral-900 font-mono">
-            {lineTotal}
-          </span>
+          <RollingValue value={lineTotal} className="text-xs font-black text-neutral-900 font-mono" />
         </div>
       </div>
     </motion.div>

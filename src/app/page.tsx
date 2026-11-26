@@ -1,6 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { getFeaturedProducts, getNewArrivals } from "@/lib/shopify/products";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { MarqueeBanner } from "@/components/home/MarqueeBanner";
@@ -8,6 +6,10 @@ import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { BrandShowcase } from "@/components/home/BrandShowcase";
 import { EditorialBanner } from "@/components/home/EditorialBanner";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
+import { BrandMarquee } from "@/components/home/BrandMarquee";
+import { ManifestoSection } from "@/components/home/ManifestoSection";
+import { SectionHeader } from "@/components/home/SectionHeader";
+import { PageTransition } from "@/components/motion/PageTransition";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductGridSkeleton } from "@/components/product/ProductSkeleton";
 
@@ -23,23 +25,12 @@ async function FeaturedProductsSection() {
   return (
     <section className="py-20 sm:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 mb-2">
-              CURATED FAVORITES
-            </p>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-neutral-900 font-sans uppercase">
-              Essential Footwear
-            </h2>
-          </div>
-          <Link
-            href="/products"
-            className="mt-4 md:mt-0 text-xs font-bold uppercase tracking-widest text-neutral-900 hover:text-neutral-500 inline-flex items-center gap-1.5 transition-colors"
-          >
-            <span>View All Styles</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <SectionHeader
+          eyebrow="CURATED FAVORITES"
+          title="Essential Footwear"
+          href="/products"
+          linkLabel="View All Styles"
+        />
 
         <ProductGrid products={products} priorityCount={4} />
       </div>
@@ -53,25 +44,15 @@ async function NewArrivalsSection() {
   return (
     <section className="py-20 sm:py-28 bg-[#FBFBFA] border-t border-neutral-200/70">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-400 mb-2">
-              LATEST RELEASES
-            </p>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-neutral-900 font-sans uppercase">
-              New Additions
-            </h2>
-          </div>
-          <Link
-            href="/products?sort=newest"
-            className="mt-4 md:mt-0 text-xs font-bold uppercase tracking-widest text-neutral-900 hover:text-neutral-500 inline-flex items-center gap-1.5 transition-colors"
-          >
-            <span>Browse New Drops</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <SectionHeader
+          eyebrow="LATEST RELEASES"
+          title="New Additions"
+          href="/products?sort=newest"
+          linkLabel="Browse New Drops"
+        />
 
-        <ProductGrid products={products} priorityCount={4} />
+        {/* morph off: these products can repeat from Featured, and view-transition names must be unique */}
+        <ProductGrid products={products} priorityCount={0} morph={false} />
       </div>
     </section>
   );
@@ -79,6 +60,7 @@ async function NewArrivalsSection() {
 
 export default function HomePage() {
   return (
+    <PageTransition>
     <div className="flex flex-col min-h-screen">
       {/* Editorial Hero */}
       <HeroBanner />
@@ -101,6 +83,9 @@ export default function HomePage() {
         <FeaturedProductsSection />
       </Suspense>
 
+      {/* Scroll-lit manifesto + count-up proof points */}
+      <ManifestoSection />
+
       {/* Brand Archive Showcase */}
       <BrandShowcase />
 
@@ -119,8 +104,12 @@ export default function HomePage() {
         <NewArrivalsSection />
       </Suspense>
 
+      {/* Oversized brand type band */}
+      <BrandMarquee />
+
       {/* High-Impact Campaign Banner */}
       <CampaignBanner />
     </div>
+    </PageTransition>
   );
 }
