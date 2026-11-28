@@ -67,7 +67,7 @@ export async function submitCustomCheckoutAction(
     }
 
     const normalizedPhone = normalizeBangladeshPhone(rawPhone);
-    if (!/^\+8801[3-9]\d{8}$/.test(normalizedPhone) && normalizedPhone.length < 10) {
+    if (!/^\+8801[3-9]\d{8}$/.test(normalizedPhone)) {
       return {
         success: false,
         error: "Please enter a valid Bangladeshi phone number (e.g. 017XXXXXXXX).",
@@ -136,6 +136,8 @@ export async function submitCustomCheckoutAction(
     const lineItems = cart.lines.nodes.map((line) => ({
       variantId: line.merchandise.id,
       quantity: line.quantity,
+      // Lock the order price to the price the customer saw in the cart
+      unitPrice: line.merchandise.price?.amount,
     }));
 
     const createdOrder = await createShopifyAdminOrder({

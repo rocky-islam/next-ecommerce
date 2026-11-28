@@ -97,6 +97,7 @@ export type CreateAdminOrderInput = {
   lineItems: {
     variantId: string;
     quantity: number;
+    unitPrice?: string;
   }[];
 };
 
@@ -141,6 +142,15 @@ export async function createShopifyAdminOrder(
     input.deliveryZone === "dhaka" ? "Dhaka" : "Outside-Dhaka",
   ];
 
+  const address = {
+    firstName: input.firstName,
+    lastName: input.lastName || "-",
+    address1: input.address,
+    city: input.city,
+    countryCode: "BD",
+    phone: input.phone,
+  };
+
   const data = await shopifyAdminFetch<{
     orderCreate: {
       userErrors: { field: string[]; message: string }[];
@@ -166,18 +176,23 @@ export async function createShopifyAdminOrder(
         financialStatus: "PENDING",
         note: orderNoteParts.join(" | "),
         tags,
+        sourceName: "nextjs-custom-checkout",
         lineItems: input.lineItems.map((item) => ({
           variantId: item.variantId,
           quantity: item.quantity,
+          ...(item.unitPrice
+            ? {
+                priceSet: {
+                  shopMoney: {
+                    amount: item.unitPrice,
+                    currencyCode: input.currencyCode || "BDT",
+                  },
+                },
+              }
+            : {}),
         })),
-        shippingAddress: {
-          firstName: input.firstName,
-          lastName: input.lastName || "-",
-          address1: input.address,
-          city: input.city,
-          countryCode: "BD",
-          phone: input.phone,
-        },
+        shippingAddress: address,
+        billingAddress: address,
         shippingLines: [
           {
             title: shippingTitle,
