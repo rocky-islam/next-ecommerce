@@ -1,10 +1,34 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getCart } from "@/lib/shopify/cart";
-import { createShopifyAdminOrder } from "@/lib/shopify/admin";
+import {
+  cancelAdminOrder,
+  createShopifyAdminOrder,
+  toOrderLegacyId,
+} from "@/lib/shopify/admin";
+import { generateTranId, initSslcommerzPayment } from "@/lib/sslcommerz";
 
 const CART_COOKIE_NAME = "shopify_cart_id";
+
+/** The URL the customer is on, so SSLCommerz returns them to the same site. */
+async function getSiteUrl(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") || h.get("host");
+  if (host) {
+    const proto =
+      h.get("x-forwarded-proto") ||
+      (host.startsWith("localhost") ? "http" : "https");
+    return `${proto}://${host}`;
+  }
+  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+}
+
+/** Called from the payment result page once payment is confirmed. */
+export async function clearCartAfterPaymentAction(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(CART_COOKIE_NAME);
+}
 
 export type CheckoutFormPayload = {
   fullName: string;
@@ -13,7 +37,7 @@ export type CheckoutFormPayload = {
   city: string;
   address: string;
   deliveryZone: "dhaka" | "outside_dhaka";
-  paymentMethod: "cod" | "mobile_banking";
+  paymentMethod: "cod" | "mobile_banking" | "sslcommerz";
   mobileWallet?: string;
   transactionId?: string;
   note?: string;
@@ -22,6 +46,8 @@ export type CheckoutFormPayload = {
 export type CheckoutActionResult = {
   success: boolean;
   error?: string;
+  /** Set for online payments: send the browser here to pay */
+  redirectUrl?: string;
   order?: {
     orderName: string;
     totalAmount: string;
@@ -140,6 +166,9 @@ export async function submitCustomCheckoutAction(
       unitPrice: line.merchandise.price?.amount,
     }));
 
+    const gatewayTranId =
+      payload.paymentMethod === "sslcommerz" ? generateTranId() : undefined;
+
     const createdOrder = await createShopifyAdminOrder({
       firstName,
       lastName,
@@ -153,9 +182,43 @@ export async function submitCustomCheckoutAction(
       paymentMethod: payload.paymentMethod,
       mobileWallet: payload.mobileWallet,
       transactionId: payload.transactionId?.trim(),
+      gatewayTranId,
       note: payload.note?.trim(),
       lineItems,
     });
+
+    if (payload.paymentMethod === "sslcommerz" && gatewayTranId) {
+      // Order is created as PENDING; send the customer to SSLCommerz.
+      // The cart is kept until payment is confirmed.
+      try {
+        const redirectUrl = await initSslcommerzPayment({
+          tranId: gatewayTranId,
+          orderLegacyId: toOrderLegacyId(createdOrder.id),
+          totalAmount: createdOrder.totalAmount,
+          currency: createdOrder.currencyCode,
+          siteUrl: await getSiteUrl(),
+          customer: {
+            name: fullName,
+            email: email || undefined,
+            phone: normalizedPhone,
+            address,
+            city,
+          },
+          productName: cart.lines.nodes
+            .map((line) => line.merchandise.product.title)
+            .join(", "),
+          itemCount: cart.totalQuantity,
+        });
+        return { success: true, redirectUrl };
+      } catch (error) {
+        // Release the stock if the payment page could not be opened
+        await cancelAdminOrder(
+          createdOrder.id,
+          "SSLCommerz session could not be created"
+        ).catch((e) => console.error("Failed to cancel order:", e));
+        throw error;
+      }
+    }
 
     // Clear the active cart cookie now that the order is placed
     cookieStore.delete(CART_COOKIE_NAME);

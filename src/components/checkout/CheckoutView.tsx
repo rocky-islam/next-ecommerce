@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Banknote,
   CheckCircle2,
+  CreditCard,
   Loader2,
   Lock,
   MapPin,
@@ -42,9 +43,9 @@ export function CheckoutView() {
   const [city, setCity] = useState("Dhaka");
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "mobile_banking">(
-    "cod"
-  );
+  const [paymentMethod, setPaymentMethod] = useState<
+    "cod" | "mobile_banking" | "sslcommerz"
+  >("cod");
   const [mobileWallet, setMobileWallet] = useState<"bKash" | "Nagad">("bKash");
   const [transactionId, setTransactionId] = useState("");
 
@@ -80,6 +81,7 @@ export function CheckoutView() {
     e.preventDefault();
     setErrorMessage(null);
     setIsSubmitting(true);
+    let redirecting = false;
 
     try {
       const result = await submitCustomCheckoutAction({
@@ -97,7 +99,11 @@ export function CheckoutView() {
         note,
       });
 
-      if (result.success && result.order) {
+      if (result.success && result.redirectUrl) {
+        // Online payment: hand off to the SSLCommerz payment page
+        redirecting = true;
+        window.location.assign(result.redirectUrl);
+      } else if (result.success && result.order) {
         setConfirmedOrder(result.order);
         clearCart();
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -113,7 +119,8 @@ export function CheckoutView() {
           : "Network error while placing order."
       );
     } finally {
-      setIsSubmitting(false);
+      // Keep the button locked while the browser leaves for the payment page
+      if (!redirecting) setIsSubmitting(false);
     }
   };
 
@@ -510,6 +517,34 @@ export function CheckoutView() {
                   </p>
                 </div>
               </button>
+
+              {/* Online payment via SSLCommerz */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("sslcommerz")}
+                className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-start gap-3.5 cursor-pointer ${
+                  paymentMethod === "sslcommerz"
+                    ? "border-black bg-neutral-50"
+                    : "border-neutral-200 hover:border-neutral-400"
+                }`}
+              >
+                <div className="p-2 rounded-xl bg-white border border-neutral-200 text-neutral-900 shrink-0">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                      Pay Online (SSLCommerz)
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                      Instant
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-1 font-light">
+                    Card, bKash, Nagad, Rocket or net banking on the secure SSLCommerz payment page.
+                  </p>
+                </div>
+              </button>
             </div>
 
             <AnimatePresence>
@@ -647,13 +682,21 @@ export function CheckoutView() {
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Confirming Order...</span>
+                <span>
+                  {paymentMethod === "sslcommerz"
+                    ? "Opening Secure Payment..."
+                    : "Confirming Order..."}
+                </span>
               </>
             ) : (
               <>
-                <PackageCheck className="w-4 h-4" />
+                {paymentMethod === "sslcommerz" ? (
+                  <Lock className="w-4 h-4" />
+                ) : (
+                  <PackageCheck className="w-4 h-4" />
+                )}
                 <span>
-                  Confirm Order ·{" "}
+                  {paymentMethod === "sslcommerz" ? "Pay Securely" : "Confirm Order"} ·{" "}
                   {formatPrice(grandTotalAmount.toString(), currencyCode)}
                 </span>
               </>

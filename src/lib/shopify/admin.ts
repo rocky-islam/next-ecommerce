@@ -80,6 +80,9 @@ const ORDER_CREATE_MUTATION = /* GraphQL */ `
   }
 `;
 
+export const SSLCOMMERZ_TRAN_ATTR = "sslcommerz_tran_id";
+export const PAYMENT_PENDING_TAG = "Payment-Pending";
+
 export type CreateAdminOrderInput = {
   firstName: string;
   lastName: string;
@@ -90,9 +93,11 @@ export type CreateAdminOrderInput = {
   deliveryZone: "dhaka" | "outside_dhaka";
   shippingCost: number;
   currencyCode: string;
-  paymentMethod: "cod" | "mobile_banking";
+  paymentMethod: "cod" | "mobile_banking" | "sslcommerz";
   mobileWallet?: string;
   transactionId?: string;
+  /** Our own gateway transaction id (SSLCommerz tran_id), stored on the order */
+  gatewayTranId?: string;
   note?: string;
   lineItems: {
     variantId: string;
@@ -124,6 +129,8 @@ export async function createShopifyAdminOrder(
   const paymentLabel =
     input.paymentMethod === "cod"
       ? "Cash on Delivery (COD)"
+      : input.paymentMethod === "sslcommerz"
+      ? `SSLCommerz Online Payment - tran_id: ${input.gatewayTranId}`
       : `Mobile Banking (${input.mobileWallet || "bKash/Nagad"}) - TrxID: ${
           input.transactionId || "Pending"
         }`;
@@ -138,8 +145,13 @@ export async function createShopifyAdminOrder(
 
   const tags = [
     "custom-nextjs-checkout",
-    input.paymentMethod === "cod" ? "COD" : "Mobile-Banking",
+    input.paymentMethod === "cod"
+      ? "COD"
+      : input.paymentMethod === "sslcommerz"
+      ? "SSLCommerz"
+      : "Mobile-Banking",
     input.deliveryZone === "dhaka" ? "Dhaka" : "Outside-Dhaka",
+    ...(input.paymentMethod === "sslcommerz" ? [PAYMENT_PENDING_TAG] : []),
   ];
 
   const address = {
@@ -177,6 +189,13 @@ export async function createShopifyAdminOrder(
         note: orderNoteParts.join(" | "),
         tags,
         sourceName: "nextjs-custom-checkout",
+        ...(input.gatewayTranId
+          ? {
+              customAttributes: [
+                { key: SSLCOMMERZ_TRAN_ATTR, value: input.gatewayTranId },
+              ],
+            }
+          : {}),
         lineItems: input.lineItems.map((item) => ({
           variantId: item.variantId,
           quantity: item.quantity,
@@ -228,4 +247,201 @@ export async function createShopifyAdminOrder(
     currencyCode: data.orderCreate.order.totalPriceSet.shopMoney.currencyCode,
     financialStatus: data.orderCreate.order.displayFinancialStatus,
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/*                    Order lookup / payment state (SSLCommerz)               */
+/* -------------------------------------------------------------------------- */
+
+export type AdminOrderSummary = {
+  id: string;
+  name: string;
+  displayFinancialStatus: string;
+  cancelledAt: string | null;
+  totalAmount: string;
+  currencyCode: string;
+  tags: string[];
+  customAttributes: { key: string; value: string | null }[];
+};
+
+export function toOrderGid(orderId: string): string {
+  return orderId.startsWith("gid://") ? orderId : `gid://shopify/Order/${orderId}`;
+}
+
+export function toOrderLegacyId(orderGid: string): string {
+  return orderGid.split("/").pop() || orderGid;
+}
+
+export async function getAdminOrder(
+  orderId: string
+): Promise<AdminOrderSummary | null> {
+  const data = await shopifyAdminFetch<{
+    order: {
+      id: string;
+      name: string;
+      displayFinancialStatus: string;
+      cancelledAt: string | null;
+      tags: string[];
+      customAttributes: { key: string; value: string | null }[];
+      totalPriceSet: { shopMoney: { amount: string; currencyCode: string } };
+    } | null;
+  }>({
+    query: /* GraphQL */ `
+      query getOrder($id: ID!) {
+        order(id: $id) {
+          id
+          name
+          displayFinancialStatus
+          cancelledAt
+          tags
+          customAttributes {
+            key
+            value
+          }
+          totalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+        }
+      }
+    `,
+    variables: { id: toOrderGid(orderId) },
+  });
+
+  if (!data.order) return null;
+  const { totalPriceSet, ...rest } = data.order;
+  return {
+    ...rest,
+    totalAmount: totalPriceSet.shopMoney.amount,
+    currencyCode: totalPriceSet.shopMoney.currencyCode,
+  };
+}
+
+async function updateOrderTags(
+  orderGid: string,
+  add: string[],
+  remove: string[]
+): Promise<void> {
+  await shopifyAdminFetch({
+    query: /* GraphQL */ `
+      mutation updateTags($id: ID!, $add: [String!]!, $remove: [String!]!) {
+        tagsAdd(id: $id, tags: $add) {
+          userErrors {
+            message
+          }
+        }
+        tagsRemove(id: $id, tags: $remove) {
+          userErrors {
+            message
+          }
+        }
+      }
+    `,
+    variables: { id: orderGid, add, remove },
+  });
+}
+
+export async function addOrderTags(orderGid: string, tags: string[]) {
+  await updateOrderTags(orderGid, tags, []);
+}
+
+/**
+ * Marks the order as paid and records the gateway details on it.
+ * Safe to call twice (success redirect + IPN can race).
+ */
+export async function markAdminOrderPaid(
+  order: AdminOrderSummary,
+  details: Record<string, string | undefined>
+): Promise<void> {
+  const data = await shopifyAdminFetch<{
+    orderMarkAsPaid: { userErrors: { message: string }[] };
+  }>({
+    query: /* GraphQL */ `
+      mutation markPaid($input: OrderMarkAsPaidInput!) {
+        orderMarkAsPaid(input: $input) {
+          userErrors {
+            message
+          }
+        }
+      }
+    `,
+    variables: { input: { id: order.id } },
+  });
+
+  const errors = data.orderMarkAsPaid.userErrors;
+  if (errors.length > 0) {
+    // Another request may have already marked it paid
+    const fresh = await getAdminOrder(order.id);
+    if (fresh?.displayFinancialStatus !== "PAID") {
+      throw new Error(errors.map((e) => e.message).join(", "));
+    }
+    return;
+  }
+
+  // Keep existing attributes and append gateway details
+  const existing = order.customAttributes.filter(
+    (a) => !(a.key in details)
+  );
+  const extra = Object.entries(details)
+    .filter((entry): entry is [string, string] => Boolean(entry[1]))
+    .map(([key, value]) => ({ key, value }));
+
+  await shopifyAdminFetch({
+    query: /* GraphQL */ `
+      mutation updateAttrs($input: OrderInput!) {
+        orderUpdate(input: $input) {
+          userErrors {
+            message
+          }
+        }
+      }
+    `,
+    variables: {
+      input: {
+        id: order.id,
+        customAttributes: [
+          ...existing.map((a) => ({ key: a.key, value: a.value ?? "" })),
+          ...extra,
+        ],
+      },
+    },
+  });
+
+  await updateOrderTags(order.id, ["Paid-Online"], [PAYMENT_PENDING_TAG]);
+}
+
+/** Cancels an unpaid order and puts the stock back. */
+export async function cancelAdminOrder(
+  orderGid: string,
+  staffNote: string
+): Promise<void> {
+  const data = await shopifyAdminFetch<{
+    orderCancel: { orderCancelUserErrors: { message: string }[] };
+  }>({
+    query: /* GraphQL */ `
+      mutation cancelOrder($orderId: ID!, $staffNote: String) {
+        orderCancel(
+          orderId: $orderId
+          reason: DECLINED
+          restock: true
+          notifyCustomer: false
+          staffNote: $staffNote
+        ) {
+          orderCancelUserErrors {
+            message
+          }
+        }
+      }
+    `,
+    variables: { orderId: orderGid, staffNote },
+  });
+
+  const errors = data.orderCancel.orderCancelUserErrors;
+  if (errors.length > 0) {
+    throw new Error(errors.map((e) => e.message).join(", "));
+  }
+
+  await updateOrderTags(orderGid, ["Payment-Failed"], [PAYMENT_PENDING_TAG]);
 }
