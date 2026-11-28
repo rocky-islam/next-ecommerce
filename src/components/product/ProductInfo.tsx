@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Loader2,
   Minus,
@@ -49,6 +50,7 @@ function DrawnCheck() {
 }
 
 export function ProductDetails({ product }: { product: Product }) {
+  const router = useRouter();
   const { addItem, isMutating } = useCart();
 
   // Find initial variant (first available or first)
@@ -151,17 +153,9 @@ export function ProductDetails({ product }: { product: Product }) {
 
     setIsBuyingNow(true);
     try {
-      const { addToCartAction, getCheckoutUrlAction } = await import(
-        "@/actions/cart"
-      );
-      const res = await addToCartAction(selectedVariant.id, quantity);
-      if (res.success && res.cart?.checkoutUrl) {
-        window.location.href = res.cart.checkoutUrl;
-        return;
-      }
-      const checkoutRes = await getCheckoutUrlAction();
-      if (checkoutRes.success && checkoutRes.checkoutUrl) {
-        window.location.href = checkoutRes.checkoutUrl;
+      const success = await addItem(selectedVariant.id, quantity, false);
+      if (success) {
+        router.push("/checkout");
       }
     } catch (err) {
       console.error("Direct checkout failed:", err);

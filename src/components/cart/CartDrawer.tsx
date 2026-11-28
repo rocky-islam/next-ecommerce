@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { X, ShoppingBag, ArrowRight, Loader2, AlertCircle, Lock, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "@/context/cart-context";
@@ -21,6 +21,7 @@ const emptyItem = {
 };
 
 export function CartDrawer() {
+  const router = useRouter();
   const {
     cart,
     isOpen,
@@ -30,7 +31,6 @@ export function CartDrawer() {
     errorMessage,
     clearError,
   } = useCart();
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Close drawer on Escape key + lock page scroll while open
   const dialogRef = useOverlay(isOpen, closeCart);
@@ -50,12 +50,8 @@ export function CartDrawer() {
   const diffToFreeShipping = freeShippingThreshold - subtotalAmount;
 
   const handleCheckout = () => {
-    if (!cart?.checkoutUrl) {
-      alert("Unable to reach checkout right now. Please try again.");
-      return;
-    }
-    setIsCheckingOut(true);
-    window.location.href = cart.checkoutUrl;
+    closeCart();
+    router.push("/checkout");
   };
 
   return (
@@ -247,21 +243,11 @@ export function CartDrawer() {
                     whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={handleCheckout}
-                    disabled={isCheckingOut}
-                    className="group btn-shine w-full py-4 bg-[#111111] text-white rounded-full font-bold text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-xl disabled:opacity-70 cursor-pointer"
+                    className="group btn-shine w-full py-4 bg-[#111111] text-white rounded-full font-bold text-xs uppercase tracking-[0.15em] flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-xl cursor-pointer"
                   >
-                    {isCheckingOut ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Connecting to Secure Checkout...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Proceed to Secure Checkout</span>
-                        <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform duration-500 group-hover:translate-x-1" />
-                      </>
-                    )}
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform duration-500 group-hover:translate-x-1" />
                   </motion.button>
 
                   <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1">

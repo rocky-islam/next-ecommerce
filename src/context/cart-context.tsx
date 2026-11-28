@@ -26,9 +26,10 @@ type CartContextType = {
   totalQuantity: number;
   errorMessage: string | null;
   clearError: () => void;
-  addItem: (variantId: string, quantity?: number) => Promise<boolean>;
+  addItem: (variantId: string, quantity?: number, openDrawer?: boolean) => Promise<boolean>;
   updateItem: (lineId: string, quantity: number) => Promise<boolean>;
   removeItem: (lineId: string) => Promise<boolean>;
+  clearCart: () => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -67,7 +68,11 @@ export function CartProvider({
   const closeCart = () => setIsOpen(false);
   const clearError = () => setErrorMessage(null);
 
-  const addItem = async (variantId: string, quantity = 1): Promise<boolean> => {
+  const addItem = async (
+    variantId: string,
+    quantity = 1,
+    openDrawer = true
+  ): Promise<boolean> => {
     setIsMutating(true);
     setErrorMessage(null);
 
@@ -76,7 +81,9 @@ export function CartProvider({
       if (result.success && result.cart) {
         startTransition(() => {
           setCart(result.cart!);
-          setIsOpen(true); // Open drawer on add
+          if (openDrawer) {
+            setIsOpen(true);
+          }
         });
         return true;
       } else {
@@ -137,6 +144,11 @@ export function CartProvider({
     }
   };
 
+  const clearCart = () => {
+    setCart(null);
+    setIsOpen(false);
+  };
+
   const totalQuantity = cart?.totalQuantity || 0;
 
   return (
@@ -155,6 +167,7 @@ export function CartProvider({
         addItem,
         updateItem,
         removeItem,
+        clearCart,
       }}
     >
       {children}

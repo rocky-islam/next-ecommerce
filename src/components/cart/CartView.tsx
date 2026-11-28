@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, ShoppingBag, ShieldCheck, Truck, RotateCcw, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "@/context/cart-context";
@@ -15,6 +16,7 @@ import { Magnetic } from "@/components/motion/Magnetic";
 import { RollText } from "@/components/motion/RollText";
 
 export function CartView() {
+  const router = useRouter();
   const { cart, isLoading, totalQuantity } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -27,12 +29,8 @@ export function CartView() {
     : "৳0";
 
   const handleCheckout = () => {
-    if (!cart?.checkoutUrl) {
-      alert("Checkout is currently unavailable. Please refresh and try again.");
-      return;
-    }
     setIsCheckingOut(true);
-    window.location.href = cart.checkoutUrl;
+    router.push("/checkout");
   };
 
   if (isLoading) {
