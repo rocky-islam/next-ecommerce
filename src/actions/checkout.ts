@@ -37,9 +37,7 @@ export type CheckoutFormPayload = {
   city: string;
   address: string;
   deliveryZone: "dhaka" | "outside_dhaka";
-  paymentMethod: "cod" | "mobile_banking" | "sslcommerz";
-  mobileWallet?: string;
-  transactionId?: string;
+  paymentMethod: "cod" | "sslcommerz";
   note?: string;
 };
 
@@ -115,14 +113,8 @@ export async function submitCustomCheckoutAction(
       };
     }
 
-    if (
-      payload.paymentMethod === "mobile_banking" &&
-      (!payload.transactionId || payload.transactionId.trim().length < 4)
-    ) {
-      return {
-        success: false,
-        error: "Please enter your bKash/Nagad Transaction ID (TrxID).",
-      };
+    if (payload.paymentMethod !== "cod" && payload.paymentMethod !== "sslcommerz") {
+      return { success: false, error: "Please choose a payment method." };
     }
 
     const cookieStore = await cookies();
@@ -180,8 +172,6 @@ export async function submitCustomCheckoutAction(
       shippingCost,
       currencyCode,
       paymentMethod: payload.paymentMethod,
-      mobileWallet: payload.mobileWallet,
-      transactionId: payload.transactionId?.trim(),
       gatewayTranId,
       note: payload.note?.trim(),
       lineItems,
@@ -231,12 +221,7 @@ export async function submitCustomCheckoutAction(
         currencyCode: createdOrder.currencyCode,
         customerName: fullName,
         phone: normalizedPhone,
-        paymentMethod:
-          payload.paymentMethod === "cod"
-            ? "Cash on Delivery"
-            : `${payload.mobileWallet || "Mobile Banking"} (TrxID: ${
-                payload.transactionId
-              })`,
+        paymentMethod: "Cash on Delivery",
         deliveryZone:
           payload.deliveryZone === "dhaka"
             ? "Inside Dhaka (2–3 Days)"

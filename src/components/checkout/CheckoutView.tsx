@@ -15,11 +15,10 @@ import {
   PackageCheck,
   ShieldCheck,
   ShoppingBag,
-  Smartphone,
   Truck,
   AlertCircle,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -44,10 +43,8 @@ export function CheckoutView() {
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<
-    "cod" | "mobile_banking" | "sslcommerz"
+    "cod" | "sslcommerz"
   >("cod");
-  const [mobileWallet, setMobileWallet] = useState<"bKash" | "Nagad">("bKash");
-  const [transactionId, setTransactionId] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -92,10 +89,6 @@ export function CheckoutView() {
         address,
         deliveryZone,
         paymentMethod,
-        mobileWallet:
-          paymentMethod === "mobile_banking" ? mobileWallet : undefined,
-        transactionId:
-          paymentMethod === "mobile_banking" ? transactionId : undefined,
         note,
       });
 
@@ -495,29 +488,6 @@ export function CheckoutView() {
                 </div>
               </button>
 
-              {/* Mobile Banking (bKash / Nagad) */}
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("mobile_banking")}
-                className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-start gap-3.5 cursor-pointer ${
-                  paymentMethod === "mobile_banking"
-                    ? "border-black bg-neutral-50"
-                    : "border-neutral-200 hover:border-neutral-400"
-                }`}
-              >
-                <div className="p-2 rounded-xl bg-white border border-neutral-200 text-neutral-900 shrink-0">
-                  <Smartphone className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    bKash / Nagad Mobile Payment
-                  </span>
-                  <p className="text-xs text-neutral-500 mt-1 font-light">
-                    Pay via bKash or Nagad and submit your Transaction ID (TrxID) for verification.
-                  </p>
-                </div>
-              </button>
-
               {/* Online payment via SSLCommerz */}
               <button
                 type="button"
@@ -546,49 +516,6 @@ export function CheckoutView() {
                 </div>
               </button>
             </div>
-
-            <AnimatePresence>
-              {paymentMethod === "mobile_banking" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="p-4 rounded-2xl bg-[#F8F8F6] border border-neutral-200 space-y-4 mt-2">
-                    <div className="flex items-center gap-2">
-                      {(["bKash", "Nagad"] as const).map((wallet) => (
-                        <button
-                          key={wallet}
-                          type="button"
-                          onClick={() => setMobileWallet(wallet)}
-                          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-                            mobileWallet === wallet
-                              ? "bg-black text-white border-black"
-                              : "bg-white text-neutral-700 border-neutral-200"
-                          }`}
-                        >
-                          {wallet}
-                        </button>
-                      ))}
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
-                        {mobileWallet} Transaction ID (TrxID) *
-                      </label>
-                      <input
-                        type="text"
-                        required={paymentMethod === "mobile_banking"}
-                        value={transactionId}
-                        onChange={(e) => setTransactionId(e.target.value)}
-                        placeholder="e.g. 9G7H2K4M1P"
-                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm bg-white focus:outline-none focus:border-black font-mono"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </section>
         </div>
 

@@ -93,9 +93,7 @@ export type CreateAdminOrderInput = {
   deliveryZone: "dhaka" | "outside_dhaka";
   shippingCost: number;
   currencyCode: string;
-  paymentMethod: "cod" | "mobile_banking" | "sslcommerz";
-  mobileWallet?: string;
-  transactionId?: string;
+  paymentMethod: "cod" | "sslcommerz";
   /** Our own gateway transaction id (SSLCommerz tran_id), stored on the order */
   gatewayTranId?: string;
   note?: string;
@@ -129,11 +127,7 @@ export async function createShopifyAdminOrder(
   const paymentLabel =
     input.paymentMethod === "cod"
       ? "Cash on Delivery (COD)"
-      : input.paymentMethod === "sslcommerz"
-      ? `SSLCommerz Online Payment - tran_id: ${input.gatewayTranId}`
-      : `Mobile Banking (${input.mobileWallet || "bKash/Nagad"}) - TrxID: ${
-          input.transactionId || "Pending"
-        }`;
+      : `SSLCommerz Online Payment - tran_id: ${input.gatewayTranId}`;
 
   const orderNoteParts = [
     `Payment Method: ${paymentLabel}`,
@@ -145,11 +139,7 @@ export async function createShopifyAdminOrder(
 
   const tags = [
     "custom-nextjs-checkout",
-    input.paymentMethod === "cod"
-      ? "COD"
-      : input.paymentMethod === "sslcommerz"
-      ? "SSLCommerz"
-      : "Mobile-Banking",
+    input.paymentMethod === "cod" ? "COD" : "SSLCommerz",
     input.deliveryZone === "dhaka" ? "Dhaka" : "Outside-Dhaka",
     ...(input.paymentMethod === "sslcommerz" ? [PAYMENT_PENDING_TAG] : []),
   ];
